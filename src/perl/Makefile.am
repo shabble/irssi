@@ -100,6 +100,7 @@ ui_sources = \
 	ui/Formats.xs \
 	ui/Themes.xs \
 	ui/Window.xs \
+	ui/Bindings.xs \
 	ui/Makefile.PL.in \
 	ui/typemap \
 	ui/module.h

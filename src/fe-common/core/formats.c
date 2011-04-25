@@ -104,6 +104,7 @@ static void format_expand_code(const char **format, GString *out, int *flags)
 int format_expand_styles(GString *out, const char **format, int *flags)
 {
 	char *p, fmt;
+    int chars_consumed = 1;
 
 	fmt = **format;
 	switch (fmt) {
@@ -162,6 +163,34 @@ int format_expand_styles(GString *out, const char **format, int *flags)
 		/* code */
 		format_expand_code(format, out, flags);
 		break;
+    case 'X':
+    { 
+        const char *buf = *format;
+        char num_chars[4];
+        strncpy(num_chars, buf + 1, 3);
+        num_chars[3] = '\0';
+        fprintf(stderr, "got esc code X '%s'\n", num_chars);
+
+        int i;
+        for (i = 0; i < 4; i++) {
+            if (num_chars[i] > '9' || num_chars[i] < '0') {
+                num_chars[i] = '\0';
+            }
+        }
+
+        chars_consumed = strlen(num_chars);
+
+        int col_num = atoi(num_chars);
+        fprintf(stderr, "got esc code X num: %d\n", col_num);
+
+        // do stuff with number here.
+        /* g_string_append_c(out, 4); */
+		/* g_string_append_c(out, FORMAT_STYLE_MONOSPACE); */
+        break;
+    }
+    case 'x':
+        fprintf(stderr, "got esc code x\n");
+        break;
 	default:
 		/* check if it's a background color */
 		p = strchr(format_backs, fmt);

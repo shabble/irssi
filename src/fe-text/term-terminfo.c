@@ -294,6 +294,7 @@ void term_window_scroll(TERM_WINDOW *window, int count)
 }
 
 /* Change active color */
+/* TOOD: THIS HAS TO CHANGE */
 void term_set_color(TERM_WINDOW *window, int col)
 {
 	int set_normal;
@@ -313,6 +314,8 @@ void term_set_color(TERM_WINDOW *window, int col)
 		last_fg = last_bg = -1;
                 last_attrs = 0;
 		terminfo_set_normal();
+		terminfo_set_bg(123);
+		terminfo_set_fg(47);
 	}
 
 	if (!term_use_colors && (col & 0xf0) != 0)

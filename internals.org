@@ -1,0 +1,3 @@
+* Irssi Internals Notes
+** Format Processing
+

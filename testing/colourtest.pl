@@ -53,10 +53,11 @@ sub test256 {
     for my $x (0..15) {
         for my $y (0..15) {
             my $z = ($x * 16) + ($y);
-            print bg($z) . "$_";
+            print bg($z) . "$z";
         }
         say rst;
     }
 }
-#test256();
+test256();
+#print "\n\n\n";
 test16();

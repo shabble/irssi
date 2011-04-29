@@ -11,12 +11,29 @@ typedef struct _TERM_WINDOW TERM_WINDOW;
 #define ATTR_UNDERLINE	0x1000
 #define ATTR_REVERSE	0x2000
 
-#define EXT_ATTR_RESETFG   0x01
-#define EXT_ATTR_RESETGG   0x02
-#define EXT_ATTR_BOLD      0x04
-#define EXT_ATTR_BLINK     0x08
-#define EXT_ATTR_UNDERLINE 0x10
-#define EXT_ATTR_REVERSE   0x20
+/* new attributes (have to fit inside a byte) */
+#define EXT_ATTR_RESETFG   (0x01) 
+#define EXT_ATTR_RESETBG   (0x02) 
+#define EXT_ATTR_BOLD      (0x04) 
+#define EXT_ATTR_BLINK     (0x08) 
+#define EXT_ATTR_UNDERLINE (0x10) 
+#define EXT_ATTR_REVERSE   (0x20) 
+
+#define EXT_COLOR_DEFAULT   (-1)
+#define COLOR_NOT_DEFAULT(x) ((x) != (EXT_COLOR_DEFAULT))
+
+#define EXT_COLOR_BLACK   ( 0 )
+#define EXT_COLOR_RED     ( 1 )
+#define EXT_COLOR_GREEN   ( 2 )
+#define EXT_COLOR_YELLOW  ( 3 )
+#define EXT_COLOR_BLUE    ( 4 )
+#define EXT_COLOR_MAGENTA ( 5 )
+#define EXT_COLOR_CYAN    ( 6 )
+#define EXT_COLOR_WHITE   ( 7 )
+
+
+
+
 
 #define EXT_ATTR_RESET     (EXT_ATTR_RESETFG | EXT_ATTR_RESETBG)
 
@@ -80,6 +97,8 @@ void term_window_clear(TERM_WINDOW *window);
 void term_window_scroll(TERM_WINDOW *window, int count);
 
 void term_set_color(TERM_WINDOW *window, int col);
+
+void term_set_extended_color(TERM_WINDOW *window, int fg, int bg);
 
 void term_move(TERM_WINDOW *window, int x, int y);
 void term_addch(TERM_WINDOW *window, char chr);

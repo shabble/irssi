@@ -1,8 +1,19 @@
 #!/usr/bin/env perl
 
+# /* Low-intensity colors. Add 8 for bright */
+# /* COLOR_BLACK   0 */
+# /* COLOR_RED     1 */
+# /* COLOR_GREEN   2 */
+# /* COLOR_YELLOW  3 */
+# /* COLOR_BLUE    4 */
+# /* COLOR_MAGENT  5 */
+# /* COLOR_CYAN    6 */
+# /* COLOR_WHITE   7 */
+	
+
 use strict;
 use warnings;
-use feature qw/say/;
+use feature qw/say switch/;
 
 sub fg ($) {
     my ($val) = @_;
@@ -18,13 +29,20 @@ sub rst () {
 }
 
 sub test16 {
-    say ""; print " ";
-    for (0..7) {
-        print bg($_) . " ";
+    say ""; #print " ";
+    for my $x (0..7) {
+	my $f;
+	given ($x) {
+	    when (0) {$f = 7 }
+	    when (7) {$f = 0 }
+	    default { $f = 0 }
+	}
+
+        print bg($x) . fg($f) . sprintf("%02d", $x);
     }
-    say rst; print " ";
-    for (8..15) {
-        print bg($_) . " ";
+    say rst; # print " ";
+    for my $x (8..15) {
+        print bg($x) . sprintf("%02d", $x);
     }
     say rst;
     say "";
@@ -35,10 +53,10 @@ sub test256 {
     for my $x (0..15) {
         for my $y (0..15) {
             my $z = ($x * 16) + ($y);
-            print bg($z) . " ";
+            print bg($z) . "$_";
         }
         say rst;
     }
 }
-test256();
-#test16();
+#test256();
+test16();

@@ -104,8 +104,8 @@ static void textbuffer_cache_unref(TEXT_BUFFER_CACHE_REC *cache)
                 textbuffer_cache_destroy(cache);
 }
 
-#define FGATTR (ATTR_NOCOLORS | ATTR_RESETFG | 0x0f)
-#define BGATTR (ATTR_NOCOLORS | ATTR_RESETBG | 0xf0)
+#define FGATTR (EXT_ATTR_NOCOLORS | EXT_ATTR_RESETFG | 0x0f)
+#define BGATTR (EXT_ATTR_NOCOLORS | EXT_ATTR_RESETBG | 0xf0)
 
 static void update_cmd_color(unsigned char cmd, int *color)
 {
@@ -129,16 +129,16 @@ static void update_cmd_color(unsigned char cmd, int *color)
 		}
 	} else switch (cmd) {
 	case LINE_CMD_UNDERLINE:
-		*color ^= ATTR_UNDERLINE;
+		*color ^= EXT_ATTR_UNDERLINE;
 		break;
 	case LINE_CMD_REVERSE:
-		*color ^= ATTR_REVERSE;
+		*color ^= EXT_ATTR_REVERSE;
 		break;
 	case LINE_CMD_BLINK:
-		*color ^= ATTR_BLINK;
+		*color ^= EXT_ATTR_BLINK;
 		break;
 	case LINE_CMD_BOLD:
-		*color ^= ATTR_BOLD;
+		*color ^= EXT_ATTR_BOLD;
 		break;
 	case LINE_CMD_COLOR0:
 		*color &= BGATTR;
@@ -359,7 +359,7 @@ static int view_line_draw(TEXT_BUFFER_VIEW_REC *view, LINE_REC *line,
 	for (;;) {
 		if (text == text_newline) {
 			if (need_clrtoeol && xpos < term_width) {
-				term_set_color(view->window, ATTR_RESET);
+				term_set_extended_color(view->window, EXT_ATTR_RESET, -1);
 				term_clrtoeol(view->window);
 			}
 
@@ -386,7 +386,7 @@ static int view_line_draw(TEXT_BUFFER_VIEW_REC *view, LINE_REC *line,
 			else {
 				/* line was indented - need to clear the
                                    indented area first */
-				term_set_color(view->window, ATTR_RESET);
+				term_set_extended_color(view->window, EXT_ATTR_RESET, -1);
 				term_move(view->window, 0, ypos);
 				term_clrtoeol(view->window);
 
@@ -397,7 +397,7 @@ static int view_line_draw(TEXT_BUFFER_VIEW_REC *view, LINE_REC *line,
 			if (need_move || xpos > 0)
 				term_move(view->window, xpos, ypos);
 
-			term_set_color(view->window, color);
+			term_set_extended_color(view->window, (color&0xF), (color &0xF0 >> 2));
 
 			if (subline == cache->count-1) {
 				text_newline = NULL;
@@ -424,7 +424,7 @@ static int view_line_draw(TEXT_BUFFER_VIEW_REC *view, LINE_REC *line,
 				continue;
 			} else {
 				update_cmd_color(*text, &color);
-				term_set_color(view->window, color);
+				term_set_extended_color(view->window, color & 0x0F, (color & 0xF0 >> 2));
 			}
 			text++;
 			continue;
@@ -453,16 +453,19 @@ static int view_line_draw(TEXT_BUFFER_VIEW_REC *view, LINE_REC *line,
 					term_addch(view->window, *text);
 			} else {
 				/* low-ascii */
-				term_set_color(view->window, ATTR_RESET|ATTR_REVERSE);
+				term_set_extended_color(view->window,
+                                        EXT_ATTR_RESET | EXT_ATTR_REVERSE, -1);
 				term_addch(view->window, (chr & 127)+'A'-1);
-				term_set_color(view->window, color);
+
+				term_set_extended_color(view->window, color & 0x0F,
+                                        (color & 0xF0 >> 2));
 			}
 		}
 		text = end;
 	}
 
 	if (need_clrtoeol && xpos < term_width) {
-		term_set_color(view->window, ATTR_RESET);
+		term_set_extended_color(view->window, EXT_ATTR_RESET, -1);
 		term_clrtoeol(view->window);
 	}
 
@@ -658,7 +661,7 @@ static void view_draw(TEXT_BUFFER_VIEW_REC *view, LINE_REC *line,
 
 	if (fill_bottom) {
 		/* clear the rest of the view */
-		term_set_color(view->window, ATTR_RESET);
+		term_set_extended_color(view->window, EXT_ATTR_RESET, -1);
 		while (lines > 0) {
 			term_move(view->window, 0, ypos);
 			term_clrtoeol(view->window);
@@ -752,7 +755,7 @@ static int view_scroll(TEXT_BUFFER_VIEW_REC *view, LINE_REC **lines,
 			   whole view */
                         textbuffer_view_redraw(view);
 		} else {
-			term_set_color(view->window, ATTR_RESET);
+			term_set_extended_color(view->window,EXT_ATTR_RESET, -1);
 			term_window_scroll(view->window, realcount);
 
 			if (draw_nonclean) {

@@ -295,7 +295,7 @@ void term_window_scroll(TERM_WINDOW *window, int count)
 
 /* Change active color */
 /* TOOD: THIS HAS TO CHANGE */
-void term_set_color(TERM_WINDOW *window, int col)
+void term_set_color2(TERM_WINDOW *window, int col)
 {
     int set_normal;
     int fg = col & 0x0f;
@@ -367,7 +367,80 @@ void term_set_color(TERM_WINDOW *window, int col)
     last_attrs = col & ~0xff;
 }
 
-void term_set_extended_color(TERM_WINDOW *window, int fg, int bg) {
+void term_set_color(TERM_WINDOW *window, signed int col)
+{
+    int set_normal;
+    int fg = col & 0xff;
+    int bg = (col & 0xff00) >> 8;
+
+    set_normal = ((col & ATTR_RESETFG) && last_fg != -1) ||
+        ((col & ATTR_RESETBG) && last_bg != -1);
+    if (((last_attrs & ATTR_BOLD) && (col & ATTR_BOLD) == 0) ||
+        ((last_attrs & ATTR_BLINK) && (col & ATTR_BLINK) == 0)) {
+        /* we'll need to get rid of bold/blink - this can only be
+           done with setting the default color */
+        set_normal = TRUE;
+    }
+
+    if (set_normal) {
+        last_fg = last_bg = -1;
+        last_attrs = 0;
+        terminfo_set_normal();
+        /* terminfo_set_bg(123); */
+        //terminfo_set_fg(47);
+    }
+
+    if (!term_use_colors && (col & 0xf000) != 0)
+        col |= ATTR_REVERSE;
+
+    /* reversed text (use standout) */
+    if (col & ATTR_REVERSE) {
+        if ((last_attrs & ATTR_REVERSE) == 0)
+            terminfo_set_standout(TRUE);
+    } else if (last_attrs & ATTR_REVERSE)
+        terminfo_set_standout(FALSE);
+
+    /* set foreground color */
+    if (fg != last_fg &&
+        (fg != 0 || (col & ATTR_RESETFG) == 0)) {
+        if (term_use_colors) {
+            last_fg = fg;
+            terminfo_set_fg(last_fg);
+        }
+    }
+
+    /* set background color */
+    if (col & 0x8000 && window->term->TI_colors == 8)
+        col |= ATTR_BLINK;
+    if (col & ATTR_BLINK)
+        current_term->set_blink(current_term);
+
+    if (bg != last_bg &&
+        (bg != 0 || (col & ATTR_RESETBG) == 0)) {
+        if (term_use_colors) {
+            last_bg = bg;
+            terminfo_set_bg(last_bg);
+        }
+    }
+
+    /* bold */
+    if (col & 0x0800 && window->term->TI_colors == 8)
+        col |= ATTR_BOLD;
+    if (col & ATTR_BOLD)
+        terminfo_set_bold();
+
+    /* underline */
+    if (col & ATTR_UNDERLINE) {
+        if ((last_attrs & ATTR_UNDERLINE) == 0)
+            terminfo_set_uline(TRUE);
+    } else if (last_attrs & ATTR_UNDERLINE)
+        terminfo_set_uline(FALSE);
+
+    /* remove colors from attrs  */
+    last_attrs = col & ~0xffff;
+}
+
+void term_set_extended_color2(TERM_WINDOW *window, int fg, int bg) {
     
     // vars we have access to here are:
     // static int last_fg, last_bg, last_attrs;

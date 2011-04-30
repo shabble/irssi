@@ -4,12 +4,12 @@
 typedef struct _TERM_WINDOW TERM_WINDOW;
 
 /* text attributes */
-#define ATTR_RESETFG	0x0100
-#define ATTR_RESETBG	0x0200
-#define ATTR_BOLD	0x0400
-#define ATTR_BLINK      0x0800
-#define ATTR_UNDERLINE	0x1000
-#define ATTR_REVERSE	0x2000
+#define ATTR_RESETFG	0x010000
+#define ATTR_RESETBG	0x020000
+#define ATTR_BOLD	0x040000
+#define ATTR_BLINK      0x080000
+#define ATTR_UNDERLINE	0x100000
+#define ATTR_REVERSE	0x200000
 
 /* new attributes (have to fit inside a byte) */
 #define EXT_ATTR_RESETFG   (0x01) 

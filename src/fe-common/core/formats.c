@@ -194,6 +194,7 @@ int format_expand_styles(GString *out, const char **format, int *flags)
     case 'x':
         fprintf(stderr, "got esc code x\n");
         break;
+
 	default:
 		/* check if it's a background color */
 		p = strchr(format_backs, fmt);

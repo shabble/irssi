@@ -223,7 +223,7 @@ void term_force_colors(int set)
 /* Clear screen */
 void term_clear(void)
 {
-    term_set_extended_color(root_window, EXT_ATTR_RESET, -1);
+    term_set_color(root_window, ATTR_RESET);
     terminfo_clear();
     term_move_reset(0, 0);
 
@@ -372,6 +372,8 @@ void term_set_color(TERM_WINDOW *window, signed int col)
     int set_normal;
     int fg = col & 0xff;
     int bg = (col & 0xff00) >> 8;
+    fprintf(stderr, "Term set color called with col: %d (%08x)\n", col, col);
+    fprintf(stderr, "fg: %02x, bg: %02x\n", fg, bg);
 
     set_normal = ((col & ATTR_RESETFG) && last_fg != -1) ||
         ((col & ATTR_RESETBG) && last_bg != -1);
@@ -385,6 +387,7 @@ void term_set_color(TERM_WINDOW *window, signed int col)
     if (set_normal) {
         last_fg = last_bg = -1;
         last_attrs = 0;
+	fprintf(stderr, "setnormal: setting last_* to 0%04x\n", last_fg);
         terminfo_set_normal();
         /* terminfo_set_bg(123); */
         //terminfo_set_fg(47);
@@ -395,10 +398,12 @@ void term_set_color(TERM_WINDOW *window, signed int col)
 
     /* reversed text (use standout) */
     if (col & ATTR_REVERSE) {
-        if ((last_attrs & ATTR_REVERSE) == 0)
+        if ((last_attrs & ATTR_REVERSE) == 0) {
             terminfo_set_standout(TRUE);
-    } else if (last_attrs & ATTR_REVERSE)
+        }
+    } else if (last_attrs & ATTR_REVERSE) {
         terminfo_set_standout(FALSE);
+    }
 
     /* set foreground color */
     if (fg != last_fg &&
@@ -406,28 +411,34 @@ void term_set_color(TERM_WINDOW *window, signed int col)
         if (term_use_colors) {
             last_fg = fg;
             terminfo_set_fg(last_fg);
+            fprintf(stderr, "setfg: setting fg to %d (0x%04x)\n", fg, fg);
         }
     }
 
     /* set background color */
-    if (col & 0x8000 && window->term->TI_colors == 8)
+    if (col & 0x8000 && window->term->TI_colors == 8) {
         col |= ATTR_BLINK;
-    if (col & ATTR_BLINK)
-        current_term->set_blink(current_term);
+    }
 
+    if (col & ATTR_BLINK) {
+        current_term->set_blink(current_term);
+    }
     if (bg != last_bg &&
         (bg != 0 || (col & ATTR_RESETBG) == 0)) {
         if (term_use_colors) {
             last_bg = bg;
             terminfo_set_bg(last_bg);
+            fprintf(stderr, "setbg: setting bg to %d (0x%04x)\n", fg, fg);
         }
     }
 
     /* bold */
     if (col & 0x0800 && window->term->TI_colors == 8)
         col |= ATTR_BOLD;
-    if (col & ATTR_BOLD)
+
+    if (col & ATTR_BOLD) {
         terminfo_set_bold();
+    }
 
     /* underline */
     if (col & ATTR_UNDERLINE) {
@@ -438,100 +449,6 @@ void term_set_color(TERM_WINDOW *window, signed int col)
 
     /* remove colors from attrs  */
     last_attrs = col & ~0xffff;
-}
-
-void term_set_extended_color2(TERM_WINDOW *window, int fg, int bg) {
-    
-    // vars we have access to here are:
-    // static int last_fg, last_bg, last_attrs;
-    
-    // we only need a char for each field (or could squash it into an int
-    // to keep the same interface), but let's do it properly.
-    // actually, keep it as a (signed) int, so we can have -1 for default.
-    
-
-    int reset_all_attrs =
-        (((fg & EXT_ATTR_RESETFG) && (COLOR_NOT_DEFAULT(last_fg)))
-         ||
-         ((bg & EXT_ATTR_RESETBG) && (COLOR_NOT_DEFAULT(last_bg))));
-
-
-    if (((last_attrs & EXT_ATTR_BOLD) && (fg & EXT_ATTR_BOLD) == 0)
-        ||
-        ((last_attrs & EXT_ATTR_BLINK) && (fg & EXT_ATTR_BLINK) == 0))
-    {
-        reset_all_attrs = TRUE;
-    }
-
-    if (reset_all_attrs) {
-        last_attrs = 0;
-        last_fg = last_bg = EXT_COLOR_DEFAULT;
-        terminfo_set_normal();
-    }
-
-    /* Why? */
-    if (!term_use_colors && (bg != 0)) {
-        fg |= EXT_ATTR_REVERSE;
-        // actaly do it?
-
-    }
-    
-    if (fg & EXT_ATTR_REVERSE) {
-        if ((last_attrs & EXT_ATTR_REVERSE) == 0) {
-            terminfo_set_standout(TRUE);
-        }
-    } else if (last_attrs & EXT_ATTR_REVERSE) {
-        terminfo_set_standout(FALSE);
-    }
-	
-    /* set foreground color */
-    // if fg has changed adn it's not black or wanting FG reset
-    if (((fg != last_fg) && (fg != 0)) 
-        || (fg & EXT_ATTR_RESETFG) == 0) {
-
-        // if colors are enabled
-        if (term_use_colors) {
-            last_fg = fg; // update the last one
-            terminfo_set_fg(last_fg); // set the fg
-        }
-    }
-
-
-    /* set background color */
-    // if fg has changed adn it's not black or wanting BG reset
-    if (((bg != last_bg) && (bg != 0)) 
-        || (bg & EXT_ATTR_RESETBG) == 0) {
-
-        // if colors are enabled
-        if (term_use_colors) {
-            last_bg = bg; // update the last one
-            terminfo_set_bg(last_bg); // set the bg
-        }
-    }
-
-    /* bold */
-    /* if it's meant to be bright and only there's only 8 colors available */
-    if ((fg > 7 || bg > 7)  && window->term->TI_colors == 8) {
-        /* make it bold instead */
-        fg |= EXT_ATTR_BOLD;
-        terminfo_set_bold();
-    }
-    /* if underline flag is set */
-    if (fg & EXT_ATTR_UNDERLINE) {
-        /* if prev attr was not underlined */
-        if ((last_attrs & ATTR_UNDERLINE) == 0) {
-            /* make it underlined */
-            terminfo_set_uline(TRUE);
-        }
-        /* otherwise if it is underlined*/
-    } else if (last_attrs & ATTR_UNDERLINE) {
-        /* disable it */
-        terminfo_set_uline(FALSE);
-    }
-
-// col and bitwise not ff = 0x** & 0 = 0
-    last_attrs = 0;
-    // set atrs to 0
 }
 
 void term_move(TERM_WINDOW *window, int x, int y)
@@ -667,7 +584,7 @@ void term_refresh(TERM_WINDOW *window)
         curs_visible = TRUE;
     }
 
-    term_set_extended_color(window, EXT_ATTR_RESET, -1);
+    term_set_color(window, ATTR_RESET);
     fflush(window != NULL ? window->term->out : current_term->out);
 }
 

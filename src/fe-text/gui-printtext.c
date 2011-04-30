@@ -144,13 +144,14 @@ static void get_colors(int flags, int *fg, int *bg, int *attr)
 		   colors wrap to 0, 1, ... */
                 if (*bg >= 0) *bg = mirc_colors[*bg % 16];
 		if (*fg >= 0) *fg = mirc_colors[*fg % 16];
+		/*  TODO: What to do here? */
 		if (settings_get_bool("mirc_blink_fix"))
 			*bg &= ~0x08;
 	}
 
-	if (*fg < 0 || *fg > 15)
+	if (*fg < 0 || *fg > 255)
 		*fg = -1;
-	if (*bg < 0 || *bg > 15)
+	if (*bg < 0 || *bg > 255)
                 *bg = -1;
 
 	*attr = 0;
@@ -186,9 +187,9 @@ static void sig_gui_print_text(WINDOW_REC *window, void *fgcolor,
 	if (window == NULL) {
                 g_return_if_fail(next_xpos != -1);
 
-		/* attr |= fg >= 0 ? fg : ATTR_RESETFG; */
-		/* attr |= bg >= 0 ? (bg << 4) : ATTR_RESETBG; */
-                term_set_extended_color(root_window, fg, bg);
+		attr |= fg >= 0 ? fg : ATTR_RESETFG;
+		attr |= bg >= 0 ? (bg << 8) : ATTR_RESETBG;
+                term_set_color(root_window, attr);
 
 		term_move(root_window, next_xpos, next_ypos);
 		if (flags & GUI_PRINT_FLAG_CLRTOEOL)

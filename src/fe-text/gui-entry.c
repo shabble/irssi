@@ -234,7 +234,7 @@ static void gui_entry_draw_from(GUI_ENTRY_REC *entry, int pos)
 	if (xpos > end_xpos)
                 return;
 
-	term_set_extended_color(root_window, EXT_ATTR_RESET, -1);
+	term_set_color(root_window, ATTR_RESET);
 	term_move(root_window, xpos, entry->ypos);
 
 	for (i = entry->scrstart + pos; i < entry->text_len; i++) {
@@ -257,10 +257,9 @@ static void gui_entry_draw_from(GUI_ENTRY_REC *entry, int pos)
 		else if (unichar_isprint(c))
 			term_add_unichar(root_window, c);
 		else {
-			term_set_extended_color(root_window, 
-                                    EXT_ATTR_RESET | EXT_ATTR_REVERSE, -1);
+			term_set_color(root_window, ATTR_RESET|ATTR_REVERSE);
 			term_addch(root_window, (c & 127)+'A'-1);
-			term_set_extended_color(root_window, EXT_ATTR_RESET, -1);
+			term_set_color(root_window, ATTR_RESET);
 		}
 	}
 

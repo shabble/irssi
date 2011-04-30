@@ -101,6 +101,8 @@ static void format_expand_code(const char **format, GString *out, int *flags)
 	}
 }
 
+/* TODO: modify this function to consume data from the format string,
+ * or at least report how many chars to skip by the caller. */
 int format_expand_styles(GString *out, const char **format, int *flags)
 {
 	char *p, fmt;
@@ -165,6 +167,7 @@ int format_expand_styles(GString *out, const char **format, int *flags)
 		break;
     case 'X':
     { 
+        /* TODO: Better numerical parsing code. */
         const char *buf = *format;
         char num_chars[4];
         strncpy(num_chars, buf + 1, 3);
@@ -224,7 +227,7 @@ int format_expand_styles(GString *out, const char **format, int *flags)
 		return FALSE;
 	}
 
-	return TRUE;
+	return chars_consumed;
 }
 
 void format_read_arglist(va_list va, FORMAT_REC *format,

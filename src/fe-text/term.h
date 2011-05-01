@@ -11,17 +11,6 @@ typedef struct _TERM_WINDOW TERM_WINDOW;
 #define ATTR_UNDERLINE	0x100000
 #define ATTR_REVERSE	0x200000
 
-/* new attributes (have to fit inside a byte) */
-#define EXT_ATTR_RESETFG   (0x01) 
-#define EXT_ATTR_RESETBG   (0x02) 
-#define EXT_ATTR_BOLD      (0x04) 
-#define EXT_ATTR_BLINK     (0x08) 
-#define EXT_ATTR_UNDERLINE (0x10) 
-#define EXT_ATTR_REVERSE   (0x20) 
-
-#define EXT_COLOR_DEFAULT   (-1)
-#define COLOR_NOT_DEFAULT(x) ((x) != (EXT_COLOR_DEFAULT))
-
 #define EXT_COLOR_BLACK   ( 0 )
 #define EXT_COLOR_RED     ( 1 )
 #define EXT_COLOR_GREEN   ( 2 )
@@ -30,19 +19,6 @@ typedef struct _TERM_WINDOW TERM_WINDOW;
 #define EXT_COLOR_MAGENTA ( 5 )
 #define EXT_COLOR_CYAN    ( 6 )
 #define EXT_COLOR_WHITE   ( 7 )
-
-
-
-
-
-#define EXT_ATTR_RESET     (EXT_ATTR_RESETFG | EXT_ATTR_RESETBG)
-
-#define EXT_ATTR_NOCOLORS  (EXT_ATTR_UNDERLINE \
-			    | EXT_ATTR_REVERSE \
-			    | EXT_ATTR_BLINK   \
-			    | EXT_ATTR_BOLD)
-
-
 
 #define ATTR_RESET	(ATTR_RESETFG|ATTR_RESETBG)
 

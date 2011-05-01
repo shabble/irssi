@@ -28,7 +28,7 @@ sub rst () {
     return "\e[0m";
 }
 
-sub test16 {
+sub test16bg {
     say ""; #print " ";
     for my $x (0..7) {
 	my $f;
@@ -48,16 +48,32 @@ sub test16 {
     say "";
 }
 
-sub test256 {
+sub test256bg {
 
     for my $x (0..15) {
         for my $y (0..15) {
             my $z = ($x * 16) + ($y);
-            print bg($z) . "$z";
+            print bg($z) . sprintf("%03d", $z);
+	    print rst . " ";
         }
         say rst;
     }
 }
-test256();
-#print "\n\n\n";
-test16();
+
+sub test256fg {
+
+    for my $x (0..15) {
+        for my $y (0..15) {
+            my $z = ($x * 16) + ($y);
+            print fg($z) . sprintf("%03d", $z);
+	    print rst . " ";
+        }
+        say rst;
+    }
+}
+
+test256bg();
+print "\n";
+test256fg();
+print "\n";
+test16bg();

@@ -24,6 +24,7 @@ typedef struct {
 	time_t time;
 } LINE_INFO_REC;
 
+/* TODO: fixme. */
 typedef struct _LINE_REC {
 	/* Text in the line. \0 means that the next char will be a
 	   color or command.

@@ -230,47 +230,77 @@ void textbuffer_line_add_colors(TEXT_BUFFER_REC *buffer, LINE_REC **line,
 				int fg, int bg, int flags)
 {
 	unsigned char data[20];
-	int pos;
+	memset(data, 0, 20);
 
+	int pos = 0;
+	int i = 0;
         /* get the fg & bg command chars */
-	fg = fg < 0 ? LINE_COLOR_DEFAULT : fg & 0x0f;
-	bg = LINE_COLOR_BG | (bg < 0 ? LINE_COLOR_DEFAULT : bg & 0x0f);
+	/* TODO: These things are adding additional data to colours.  */
+	fprintf(stderr, "TBLAC1: fg: 0x%08x, bg: 0x%08x, flags: 0x%08x, last_flags: 0x%08x\n",
+		fg, bg, flags, buffer->last_flags);
 
-	pos = 0;
+	fg = fg < 0 ? LINE_COLOR_DEFAULT : fg & 0xff;
+	bg = LINE_COLOR_BG | (bg < 0 ? LINE_COLOR_DEFAULT : bg & 0xff);
+
+	fprintf(stderr, "TBLAC2: fg: 0x%02x, bg: 0x%02x\n", fg, bg);
+
 	if (fg != buffer->last_fg) {
 		buffer->last_fg = fg;
 		data[pos++] = 0;
 		data[pos++] = fg == 0 ? LINE_CMD_COLOR0 : fg;
+		fprintf(stderr, "TBLAC2: fg: data[%d}=%d(0x%02x)\n", pos-1,data[pos-1],data[pos-1]);
+
 	}
 	if (bg != buffer->last_bg) {
                 buffer->last_bg = bg;
 		data[pos++] = 0;
 		data[pos++] = bg;
+		fprintf(stderr, "TBLAC2: bg: data[%d}=%d(0x%02x)\n", pos-1,data[pos-1],data[pos-1]);
+
 	}
 
 	if ((flags & GUI_PRINT_FLAG_UNDERLINE) != (buffer->last_flags & GUI_PRINT_FLAG_UNDERLINE)) {
 		data[pos++] = 0;
 		data[pos++] = LINE_CMD_UNDERLINE;
+		fprintf(stderr, "TBLAC2: underline: data[%d}=%d(0x%02x)\n", pos-1,data[pos-1],data[pos-1]);
+
 	}
 	if ((flags & GUI_PRINT_FLAG_REVERSE) != (buffer->last_flags & GUI_PRINT_FLAG_REVERSE)) {
 		data[pos++] = 0;
 		data[pos++] = LINE_CMD_REVERSE;
+		fprintf(stderr, "TBLAC2: reverse: data[%d}=%d(0x%02x)\n", pos-1,data[pos-1],data[pos-1]);
+
 	}
 	if ((flags & GUI_PRINT_FLAG_BLINK) != (buffer->last_flags & GUI_PRINT_FLAG_BLINK)) {
 		data[pos++] = 0;
 		data[pos++] = LINE_CMD_BLINK;
+		fprintf(stderr, "TBLAC2: blink: data[%d}=%d(0x%02x)\n", pos-1,data[pos-1],data[pos-1]);
+
 	}
 	if ((flags & GUI_PRINT_FLAG_BOLD) != (buffer->last_flags & GUI_PRINT_FLAG_BOLD)) {
 		data[pos++] = 0;
 		data[pos++] = LINE_CMD_BOLD;
+		fprintf(stderr, "TBLAC2: bold: data[%d}=%d(0x%02x)\n", pos,data[pos-1],data[pos-1]);
+
 	}
 	if (flags & GUI_PRINT_FLAG_INDENT) {
 		data[pos++] = 0;
 		data[pos++] = LINE_CMD_INDENT;
+		fprintf(stderr, "TBLAC2: indent: data[%d}=%d(0x%02x)\n", pos-1,data[pos-1],data[pos-1]);
+
 	}
 
-        if (pos > 0)
+	fprintf(stderr, "TBLAC data:\n");
+
+	for (i=0; i < 20; i++) {
+	     fprintf(stderr, "%02x ", data[i]);
+	}
+	fprintf(stderr, "\n");
+
+        if (pos > 0) {
+	     fprintf(stderr, "calling textbuffer_insert()\n");
 		*line = textbuffer_insert(buffer, *line, data, pos, NULL);
+	}
 
 	buffer->last_flags = flags;
 }
@@ -310,6 +340,9 @@ LINE_REC *textbuffer_insert(TEXT_BUFFER_REC *buffer, LINE_REC *insert_after,
 		buffer->last_bg = LINE_COLOR_DEFAULT | LINE_COLOR_BG;
 		buffer->last_flags = 0;
 	}
+
+	fprintf(stderr, "line created: '%s' %d\n", line->text, line->info.time);
+	fprintf(stderr, "Buffer %p\n", buffer);
 
         return line;
 }
@@ -370,6 +403,8 @@ static void set_color(GString *str, int cmd)
 	if (!(cmd & LINE_COLOR_DEFAULT))
 		color = (cmd & 0x0f)+'0';
 
+	fprintf(stderr, "textbuffer.c:set_color color: %d (%02x)\n", color, color);
+
 	if ((cmd & LINE_COLOR_BG) == 0) {
                 /* change foreground color */
 		g_string_append_printf(str, "\004%c%c",
@@ -417,6 +452,9 @@ void textbuffer_line2text(LINE_REC *line, int coloring, GString *str)
 			/* no colors, skip coloring commands */
                         continue;
 		}
+
+		/* these magic numbers correspond with some of IS_COLOR_CODE in
+		 * formats.c:843 (31 and 22) */
 
 		if ((cmd & 0x80) == 0) {
 			/* set color */

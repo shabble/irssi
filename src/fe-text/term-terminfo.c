@@ -367,13 +367,16 @@ void term_set_color2(TERM_WINDOW *window, int col)
     last_attrs = col & ~0xff;
 }
 
-void term_set_color(TERM_WINDOW *window, signed int col)
+void term_set_color(TERM_WINDOW *window, int col)
 {
     int set_normal;
     int fg = col & 0xff;
     int bg = (col & 0xff00) >> 8;
-    fprintf(stderr, "Term set color called with col: %d (%08x)\n", col, col);
-    fprintf(stderr, "fg: %02x, bg: %02x\n", fg, bg);
+
+    if (col != ATTR_RESET) { 
+	 fprintf(stderr, "T-TI: set color called with col: %d (%08x)\n", col, col);
+	 fprintf(stderr, "T-TI: fg: %d (0x%02x), bg: %d (0x%02x)\n", fg, fg, bg, bg);
+    }
 
     set_normal = ((col & ATTR_RESETFG) && last_fg != -1) ||
         ((col & ATTR_RESETBG) && last_bg != -1);
@@ -393,21 +396,23 @@ void term_set_color(TERM_WINDOW *window, signed int col)
         //terminfo_set_fg(47);
     }
 
-    if (!term_use_colors && (col & 0xf000) != 0)
+    if (!term_use_colors && (col & 0xf000) != 0) {
         col |= ATTR_REVERSE;
+    }
 
     /* reversed text (use standout) */
     if (col & ATTR_REVERSE) {
         if ((last_attrs & ATTR_REVERSE) == 0) {
-            terminfo_set_standout(TRUE);
+	     fprintf(stderr, "setreverse: on\n");
+	     terminfo_set_standout(TRUE);
         }
     } else if (last_attrs & ATTR_REVERSE) {
-        terminfo_set_standout(FALSE);
+	 fprintf(stderr, "setreverse: off\n");
+	 terminfo_set_standout(FALSE);
     }
 
     /* set foreground color */
-    if (fg != last_fg &&
-        (fg != 0 || (col & ATTR_RESETFG) == 0)) {
+    if (fg != last_fg && (fg != 0 || (col & ATTR_RESETFG) == 0)) {
         if (term_use_colors) {
             last_fg = fg;
             terminfo_set_fg(last_fg);
@@ -416,36 +421,44 @@ void term_set_color(TERM_WINDOW *window, signed int col)
     }
 
     /* set background color */
+    /* TODO: What magic numbers?  */
     if (col & 0x8000 && window->term->TI_colors == 8) {
-        col |= ATTR_BLINK;
+	 fprintf(stderr, "0x080 match: setting attr_bold\n");
+	 col |= ATTR_BLINK;
     }
 
     if (col & ATTR_BLINK) {
-        current_term->set_blink(current_term);
+	 fprintf(stderr, "setblink\n");
+	 current_term->set_blink(current_term);
     }
-    if (bg != last_bg &&
-        (bg != 0 || (col & ATTR_RESETBG) == 0)) {
+
+    if (bg != last_bg && (bg != 0 || (col & ATTR_RESETBG) == 0)) {
         if (term_use_colors) {
             last_bg = bg;
             terminfo_set_bg(last_bg);
-            fprintf(stderr, "setbg: setting bg to %d (0x%04x)\n", fg, fg);
+            fprintf(stderr, "setbg: setting bg to %d (0x%04x)\n", bg, bg);
         }
     }
 
     /* bold */
-    if (col & 0x0800 && window->term->TI_colors == 8)
-        col |= ATTR_BOLD;
+    if (col & 0x080 && window->term->TI_colors == 8) {
+	 fprintf(stderr, "0x080 match: setting attr_bold\n");
+	 col |= ATTR_BOLD;
+    }
 
     if (col & ATTR_BOLD) {
-        terminfo_set_bold();
+	 fprintf(stderr, "setbold\n");
+	 terminfo_set_bold();
     }
 
     /* underline */
     if (col & ATTR_UNDERLINE) {
-        if ((last_attrs & ATTR_UNDERLINE) == 0)
-            terminfo_set_uline(TRUE);
-    } else if (last_attrs & ATTR_UNDERLINE)
+	 if ((last_attrs & ATTR_UNDERLINE) == 0) {
+	      terminfo_set_uline(TRUE);
+	 }
+    } else if (last_attrs & ATTR_UNDERLINE) {
         terminfo_set_uline(FALSE);
+    }
 
     /* remove colors from attrs  */
     last_attrs = col & ~0xffff;

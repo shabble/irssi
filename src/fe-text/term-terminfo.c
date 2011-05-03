@@ -376,10 +376,10 @@ void term_set_color(TERM_WINDOW *window, int col)
     int attrs = (col & 0xff0000) << 16;
 
     if (col != ATTR_RESET) { 
-	 fprintf(stderr, "T-TI: set color called with col: %d (%08x)\n", col, col);
-	 fprintf(stderr, "T-TI: fg: %d (0x%02x), bg: %d (0x%02x)\n", fg, fg, bg, bg);
+	 g_message( "T-TI: set color called with col: %d (%08x)\n", col, col);
+	 g_message( "T-TI: fg: %d (0x%02x), bg: %d (0x%02x)\n", fg, fg, bg, bg);
     } else {
-	 fprintf(stderr, "T-TI: set color called with col: %d (%08x)\n", col, col);
+	 g_message( "T-TI: set color called with col: %d (%08x)\n", col, col);
     }
 
     set_normal = ((col & ATTR_RESETFG) && last_fg != -1) ||
@@ -394,7 +394,7 @@ void term_set_color(TERM_WINDOW *window, int col)
     if (set_normal) {
         last_fg = last_bg = -1;
         last_attrs = 0;
-	fprintf(stderr, "setnormal: setting last_* to 0%04x\n", last_fg);
+	g_message( "setnormal: setting last_* to 0%04x\n", last_fg);
         terminfo_set_normal();
         /* terminfo_set_bg(123); */
         //terminfo_set_fg(47);
@@ -407,11 +407,11 @@ void term_set_color(TERM_WINDOW *window, int col)
     /* reversed text (use standout) */
     if (col & ATTR_REVERSE) {
         if ((last_attrs & ATTR_REVERSE) == 0) {
-	     fprintf(stderr, "setreverse: on\n");
+	     g_message( "setreverse: on\n");
 	     terminfo_set_standout(TRUE);
         }
     } else if (last_attrs & ATTR_REVERSE) {
-	 fprintf(stderr, "setreverse: off\n");
+	 g_message( "setreverse: off\n");
 	 terminfo_set_standout(FALSE);
     }
 
@@ -420,19 +420,19 @@ void term_set_color(TERM_WINDOW *window, int col)
         if (term_use_colors) {
             last_fg = fg;
             terminfo_set_fg(last_fg);
-            fprintf(stderr, "setfg: setting fg to %d (0x%04x)\n", fg, fg);
+            g_message( "setfg: setting fg to %d (0x%04x)\n", fg, fg);
         }
     }
 
     /* set background color */
     /* TODO: What magic numbers?  */
     if (col & 0x8000 && window->term->TI_colors == 8) {
-	 fprintf(stderr, "0x080 match: setting attr_bold\n");
+	 g_message( "0x080 match: setting attr_bold\n");
 	 col |= ATTR_BLINK;
     }
 
     if (col & ATTR_BLINK) {
-	 fprintf(stderr, "setblink\n");
+	 g_message( "setblink\n");
 	 current_term->set_blink(current_term);
     }
 
@@ -440,18 +440,18 @@ void term_set_color(TERM_WINDOW *window, int col)
         if (term_use_colors) {
             last_bg = bg;
             terminfo_set_bg(last_bg);
-            fprintf(stderr, "setbg: setting bg to %d (0x%04x)\n", bg, bg);
+            g_message( "setbg: setting bg to %d (0x%04x)\n", bg, bg);
         }
     }
 
     /* bold */
     if (col & 0x080 && window->term->TI_colors == 8) {
-	 fprintf(stderr, "0x080 match: setting attr_bold\n");
+	 g_message( "0x080 match: setting attr_bold\n");
 	 col |= ATTR_BOLD;
     }
 
     if (col & ATTR_BOLD) {
-	 fprintf(stderr, "setbold\n");
+	 g_message( "setbold\n");
 	 terminfo_set_bold();
     }
 

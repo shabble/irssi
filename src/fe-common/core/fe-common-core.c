@@ -280,19 +280,23 @@ void glog_func(const char *log_domain, GLogLevelFlags log_level,
 	case G_LOG_LEVEL_CRITICAL:
                 reason = "critical";
 		break;
+	case G_LOG_LEVEL_MESSAGE:
+	     reason = "msg";
+	     break;
 	default:
 		reason = "error";
                 break;
 	}
 
 	if (irssi_logfile != NULL && logfile_FILE != NULL) {
-	     fprintf(logfile_FILE, "GLib: %s: %s\n", reason, message);
-	} else 	if (windows == NULL)
-	     fprintf(stderr, "GLib %s: %s\n", reason, message);
-	else {
-	     printformat(NULL, NULL, MSGLEVEL_CLIENTERROR,
-			 TXT_GLIB_ERROR, reason, message);
-	}
+	     fprintf(logfile_FILE, "GLib: %s: %s", reason, message);
+	     fflush(logfile_FILE);
+	} /* else if (windows == NULL) */
+	/*      fprintf(stderr, "GLib %s: %s\n", reason, message); */
+	/* else { */
+	/*      printformat(NULL, NULL, MSGLEVEL_CLIENTERROR, */
+	/* 		 TXT_GLIB_ERROR, reason, message); */
+	/* } */
 }
 
 #define MSGS_WINDOW_LEVELS (MSGLEVEL_MSGS|MSGLEVEL_ACTIONS|MSGLEVEL_DCCMSGS)

@@ -140,7 +140,7 @@ static void remove_old_lines(TEXT_BUFFER_VIEW_REC *view)
 static void get_colors(int flags, int *fg, int *bg, int *attr)
 {
 	if (flags & GUI_PRINT_FLAG_MIRC_COLOR) {
-	     fprintf(stderr, "getcolor: handling mirc colors\n");
+	     g_message( "getcolor: handling mirc colors\n");
 	     
 		/* mirc colors - real range is 0..15, but after 16
 		   colors wrap to 0, 1, ... */
@@ -152,30 +152,30 @@ static void get_colors(int flags, int *fg, int *bg, int *attr)
 	}
 
 	if (*fg < 0 || *fg > 255) {
-	     fprintf(stderr, "getcolor: fg %d outside range, setting to -1\n", *fg);
+	     g_message( "getcolor: fg %d outside range, setting to -1\n", *fg);
 	     *fg = -1;
 	}
 	if (*bg < 0 || *bg > 255) {
-	     fprintf(stderr, "getcolor: bf %d outside range, setting to -1\n", *bg);
+	     g_message( "getcolor: bf %d outside range, setting to -1\n", *bg);
 	     *bg = -1;
 	}
 
 	*attr = 0;
 	if (flags & GUI_PRINT_FLAG_REVERSE) {
 	     *attr |= ATTR_REVERSE;
-	     fprintf(stderr, "getcolor: setting flag_reverse\n");
+	     g_message( "getcolor: setting flag_reverse\n");
 	}
 	if (flags & GUI_PRINT_FLAG_BOLD) {
 	     *attr |= ATTR_BOLD;
-	     fprintf(stderr, "getcolor: setting flag_bold\n");
+	     g_message( "getcolor: setting flag_bold\n");
 	}
 	if (flags & GUI_PRINT_FLAG_UNDERLINE) {
 	     *attr |= ATTR_UNDERLINE;
-	     fprintf(stderr, "getcolor: setting flag_underline\n");
+	     g_message( "getcolor: setting flag_underline\n");
 	}
 	if (flags & GUI_PRINT_FLAG_BLINK) {
 	     *attr |= ATTR_BLINK;
-	     fprintf(stderr, "getcolor: setting flag_blink\n");
+	     g_message( "getcolor: setting flag_blink\n");
 	}
 }
 
@@ -203,15 +203,15 @@ static void sig_gui_print_text(WINDOW_REC *window, void *fgcolor,
 	fg = GPOINTER_TO_INT(fgcolor);
 	bg = GPOINTER_TO_INT(bgcolor);
 
-	fprintf(stderr, "SGPT str: '%s'\n", str);
+	g_message( "SGPT str: '%s'\n", str);
 
 
-	fprintf(stderr, "SGPT start: fg: %d (%02x), bg: %d (%02x) attr: %d (%04x), flags: %d (0x%04x)\n",
+	g_message( "SGPT start: fg: %d (%02x), bg: %d (%02x) attr: %d (%04x), flags: %d (0x%04x)\n",
 		fg, fg, bg, bg, attr, attr, flags, flags);
 
 	get_colors(flags, &fg, &bg, &attr);
 
-	fprintf(stderr, "SGPT getcol: fg: %d (%02x), bg: %d (%02x) attr: %d (%04x)\n",
+	g_message( "SGPT getcol: fg: %d (%02x), bg: %d (%02x) attr: %d (%04x)\n",
 		fg, fg, (bg << 8), (bg << 8), attr, attr);
 
 	if (window == NULL) {
@@ -219,7 +219,7 @@ static void sig_gui_print_text(WINDOW_REC *window, void *fgcolor,
 
 		attr |= fg >= 0 ? fg : ATTR_RESETFG;
 		attr |= bg >= 0 ? (bg << 8) : ATTR_RESETBG;
-		fprintf(stderr, 
+		g_message( 
 			"SGPT nowin: fg: %d (%02x), bg: %d (%02x) attr: %d (%04x)\n",
 			fg, fg, (bg << 8), (bg << 8), attr, attr);
 

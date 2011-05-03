@@ -66,7 +66,7 @@ static void format_expand_code(const char **format, GString *out, int *flags)
 {
 	int set;
 
-	fprintf(stderr, "format_expand_codes()\n");
+	g_message( "format_expand_codes()\n");
 
 	if (flags == NULL) {
 		/* flags are being ignored - skip the code */
@@ -109,7 +109,7 @@ int format_expand_styles(GString *out, const char **format, int *flags)
 
 	fmt = **format;
 
-	fprintf(stderr, "format_expand_styles: fmtchar: %c\n", fmt);
+	g_message( "format_expand_styles: fmtchar: %c\n", fmt);
 
 	switch (fmt) {
 	case '{':
@@ -126,7 +126,7 @@ int format_expand_styles(GString *out, const char **format, int *flags)
 	case '9':
 	case '_':
 		/* bold on/off */
-	     fprintf(stderr, "setting bold flag: %04x\n", FORMAT_STYLE_BOLD);
+	     g_message( "setting bold flag: %04x\n", FORMAT_STYLE_BOLD);
 		g_string_append_c(out, 4);
 		g_string_append_c(out, FORMAT_STYLE_BOLD);
 		break;
@@ -175,7 +175,7 @@ int format_expand_styles(GString *out, const char **format, int *flags)
 			g_string_append_c(out, 4);
 			g_string_append_c(out, FORMAT_COLOR_NOCHANGE);
 			g_string_append_c(out, (char) ((int) (p-format_backs)+'0'));
-			fprintf(stderr, "BG: Printing: %d '%s'\n", 
+			g_message( "BG: Printing: %d '%s'\n", 
 				((int) (p-format_backs)+'0'), out->str);
 			break;
 		}
@@ -386,7 +386,7 @@ int format_real_length(const char *str, int len)
 
 char *format_string_expand(const char *text, int *flags)
 {
-     fprintf(stderr, "format_string_expand: flags: %04x\n", *flags);
+     g_message( "format_string_expand: flags: %04x\n", *flags);
 
 	GString *out;
 	char code, *ret;
@@ -972,7 +972,7 @@ void format_send_to_gui(TEXT_DEST_REC *dest, const char *text)
 
 		if (*str != '\0' || (flags & GUI_PRINT_FLAG_CLRTOEOL)) {
 			/* send the text to gui handler */
-		     fprintf(stderr, "format_send_to_gui: sending: fg: 0x%04x, bg: 0x%04x flags: 0x%04x\n", fgcolor, bgcolor, flags);
+		     g_message( "format_send_to_gui: sending: fg: 0x%04x, bg: 0x%04x flags: 0x%04x\n", fgcolor, bgcolor, flags);
 			signal_emit_id(signal_gui_print_text, 6, dest->window,
 				       GINT_TO_POINTER(fgcolor),
 				       GINT_TO_POINTER(bgcolor),
@@ -1019,7 +1019,7 @@ void format_send_to_gui(TEXT_DEST_REC *dest, const char *text)
 				break;
 			case FORMAT_STYLE_BOLD:
 				flags ^= GUI_PRINT_FLAG_BOLD;
-				fprintf(stderr, 
+				g_message( 
 					"format bold spotted, flags now: 0x%04x\n",
 					flags);
 

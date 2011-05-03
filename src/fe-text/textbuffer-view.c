@@ -109,10 +109,10 @@ static void textbuffer_cache_unref(TEXT_BUFFER_CACHE_REC *cache)
 
 static void update_cmd_color(unsigned char cmd, int *color)
 {
-     fprintf(stderr, "update_cmd_color() color: 0x%08x, cmd: 0x%08x\n", *color, cmd);
+     g_message( "update_cmd_color() color: 0x%08x, cmd: 0x%08x\n", *color, cmd);
 
      if ((cmd & 0x80) == 0) {
-	  fprintf(stderr, "update_cmd_color() color_change\n");
+	  g_message( "update_cmd_color() color_change\n");
 
 	  if (cmd & LINE_COLOR_BG) {
 	       /* set background color */
@@ -121,13 +121,13 @@ static void update_cmd_color(unsigned char cmd, int *color)
 	       //*color &= ~LINE_COLOR_BG;
 	       if ((cmd & LINE_COLOR_DEFAULT) == 0) {
 		    int mask = (((cmd & ~LINE_COLOR_BG) & 0x00ff) << 8);
-		    fprintf(stderr, "update_cmd_color() bg mask 0x%02x\n", mask);
+		    g_message( "update_cmd_color() bg mask 0x%02x\n", mask);
 		    *color |= mask;
 	       } else {
 		    *color = (*color & FGATTR) | ATTR_RESETBG;
 	       }
 
-	       fprintf(stderr, "update_cmd_color() bg color_change 0x%02d\n", *color);
+	       g_message( "update_cmd_color() bg color_change 0x%02d\n", *color);
 
 
 	  } else {
@@ -139,7 +139,7 @@ static void update_cmd_color(unsigned char cmd, int *color)
 	       else {
 		    *color = (*color & BGATTR) | ATTR_RESETFG;
 	       }
-	       fprintf(stderr, "update_cmd_color() fg color_change 0x%02d\n", *color);
+	       g_message( "update_cmd_color() fg color_change 0x%02d\n", *color);
 	  }
      } else {
 
@@ -147,35 +147,35 @@ static void update_cmd_color(unsigned char cmd, int *color)
 
 	  case LINE_CMD_UNDERLINE:
 	       *color ^= ATTR_UNDERLINE;
-	       fprintf(stderr, "update_cmd_color() toggle underline 0x%08d\n", *color);
+	       g_message( "update_cmd_color() toggle underline 0x%08d\n", *color);
 
 	       break;
 	  case LINE_CMD_REVERSE:
 
 	       *color ^= ATTR_REVERSE;
-	       fprintf(stderr, "update_cmd_color() toggle reverse 0x%08d\n", *color);
+	       g_message( "update_cmd_color() toggle reverse 0x%08d\n", *color);
 
 	       break;
 	  case LINE_CMD_BLINK:
 
 	       *color ^= ATTR_BLINK;
-	       fprintf(stderr, "update_cmd_color() toggle blink 0x%08d\n", *color);
+	       g_message( "update_cmd_color() toggle blink 0x%08d\n", *color);
 
 	       break;
 	  case LINE_CMD_BOLD:
 
 	       *color ^= ATTR_BOLD;
-	       fprintf(stderr, "update_cmd_color() toggle bold 0x%08d\n", *color);
+	       g_message( "update_cmd_color() toggle bold 0x%08d\n", *color);
 
 	       break;
 	  case LINE_CMD_COLOR0:
 	       *color &= BGATTR;
-	       fprintf(stderr, "update_cmd_color() set BGATTR RESET 0x%08d\n", *color);
+	       g_message( "update_cmd_color() set BGATTR RESET 0x%08d\n", *color);
 
 	       break;
 	  }
      }
-     fprintf(stderr, "update_cmd_color() end color: 0x%04x\n", *color);
+     g_message( "update_cmd_color() end color: 0x%04x\n", *color);
 
 }
 
@@ -389,7 +389,7 @@ static int view_line_draw(TEXT_BUFFER_VIEW_REC *view, LINE_REC *line,
 	xpos = drawcount = 0; first = TRUE;
 	text_newline = text =
 		subline == 0 ? line->text : cache->lines[subline-1].start;
-	fprintf(stderr, "view_line_draw()\n");
+	g_message( "view_line_draw()\n");
 	for (;;) {
 		if (text == text_newline) {
 			if (need_clrtoeol && xpos < term_width) {
@@ -435,7 +435,7 @@ static int view_line_draw(TEXT_BUFFER_VIEW_REC *view, LINE_REC *line,
 //#include <signal.h>
 //raise(SIGINT);
 //#endif
-			fprintf(stderr, "view_line_draw(): color: 0x%08x\n", color);
+			g_message( "view_line_draw(): color: 0x%08x\n", color);
 			term_set_color(view->window, color);
 
 			if (subline == cache->count-1) {
@@ -463,7 +463,7 @@ static int view_line_draw(TEXT_BUFFER_VIEW_REC *view, LINE_REC *line,
 				continue;
 			} else {
 				update_cmd_color(*text, &color);
-				fprintf(stderr, "post update_cmd_color: 0x%08x\n",
+				g_message( "post update_cmd_color: 0x%08x\n",
 					color);
 
 				term_set_color(view->window, color);
@@ -495,11 +495,11 @@ static int view_line_draw(TEXT_BUFFER_VIEW_REC *view, LINE_REC *line,
 					term_addch(view->window, *text);
 			} else {
 				/* low-ascii */
-			     fprintf(stderr, "printing inverse char %c\n",
+			     g_message( "printing inverse char %c\n",
 				     (chr & 127)+'A'-1);
 				term_set_color(view->window, ATTR_RESET|ATTR_REVERSE);
 				term_addch(view->window, (chr & 127)+'A'-1);
-				fprintf(stderr, "setting color back to: 0x%08x\n",
+				g_message( "setting color back to: 0x%08x\n",
 					color);
 				term_set_color(view->window, color);
 			}

@@ -105,6 +105,8 @@ static void format_expand_code(const char **format, GString *out, int *flags)
 
 int format_expand_styles(GString *out, const char **format, int *flags)
 {
+     int retval = 1;
+
 	char *p, fmt;
 
 	/* storage for numerical parsing code for %x/X formats. */
@@ -185,6 +187,8 @@ int format_expand_styles(GString *out, const char **format, int *flags)
 		       accum = accum * 16 + tmp;
 		  }	
 	     }
+	     retval += i - 1;
+
 	     g_string_append_c(out, 4);
 	     g_string_append_c(out, FORMAT_COLOR_NOCHANGE);
 	     g_string_append_c(out, accum);
@@ -206,6 +210,7 @@ int format_expand_styles(GString *out, const char **format, int *flags)
 	     g_string_append_c(out, 4);
 	     g_string_append_c(out, accum);
 	     g_string_append_c(out, FORMAT_COLOR_NOCHANGE);
+	     retval += i - 1;
 
 	     g_message("Format X: code: %d (0x%02x)\n", accum, accum);
 	     
@@ -244,11 +249,11 @@ int format_expand_styles(GString *out, const char **format, int *flags)
 			g_string_append_c(out, FORMAT_COLOR_NOCHANGE);
 			break;
 		}
-
-		return FALSE;
+		
+		return 0;
 	}
 
-	return TRUE;
+	return retval;
 }
 
 void format_read_arglist(va_list va, FORMAT_REC *format,
@@ -356,6 +361,7 @@ int format_get_length(const char *str)
 	GString *tmp;
 	int len;
 	gboolean utf8;
+	int adv = 0;
 
 	g_return_val_if_fail(str != NULL, 0);
 
@@ -366,10 +372,12 @@ int format_get_length(const char *str)
 	while (*str != '\0') {
 		if (*str == '%' && str[1] != '\0') {
 			str++;
-			if (*str != '%' &&
-			    format_expand_styles(tmp, &str, NULL)) {
-				str++;
-				continue;
+			if (*str != '%') {
+			     adv = format_expand_styles(tmp, &str, NULL);
+			     str += adv;
+			     if (adv > 1) {
+				  continue;
+			     }
 			}
 
 			/* %% or unknown %code, written as-is */
@@ -393,7 +401,7 @@ int format_real_length(const char *str, int len)
 	const char *start;
 	const char *oldstr;
 	gboolean utf8;
-
+	int adv = 0;
 	g_return_val_if_fail(str != NULL, 0);
 	g_return_val_if_fail(len >= 0, 0);
 
@@ -404,10 +412,12 @@ int format_real_length(const char *str, int len)
 	while (*str != '\0' && len > 0) {
 		if (*str == '%' && str[1] != '\0') {
 			str++;
-			if (*str != '%' &&
-			    format_expand_styles(tmp, &str, NULL)) {
-				str++;
+			if (*str != '%') {
+			     adv = format_expand_styles(tmp, &str, NULL);
+			     str += adv;
+			     if (adv > 1) {
 				continue;
+			     }
 			}
 
 			/* %% or unknown %code, written as-is */
@@ -433,6 +443,7 @@ char *format_string_expand(const char *text, int *flags)
 
 	GString *out;
 	char code, *ret;
+	int adv;
 
 	g_return_val_if_fail(text != NULL, NULL);
 
@@ -443,12 +454,15 @@ char *format_string_expand(const char *text, int *flags)
 	while (*text != '\0') {
 		if (code == '%') {
 			/* color code */
-			if (!format_expand_styles(out, &text, flags)) {
+		     adv = format_expand_styles(out, &text, flags);
+		     if (!adv) {
 				g_string_append_c(out, '%');
 				g_string_append_c(out, '%');
 				g_string_append_c(out, *text);
-			}
-			code = 0;
+		     } else {
+			  text += adv -1;
+		     }
+		     code = 0;
 		} else {
 			if (*text == '%')
 				code = *text;
@@ -470,6 +484,7 @@ static char *format_get_text_args(TEXT_DEST_REC *dest,
 	GString *out;
 	char code, *ret;
 	int need_free;
+	int adv;
 
 	out = g_string_new(NULL);
 
@@ -477,12 +492,15 @@ static char *format_get_text_args(TEXT_DEST_REC *dest,
 	while (*text != '\0') {
 		if (code == '%') {
 			/* color code */
-			if (!format_expand_styles(out, &text, &dest->flags)) {
-				g_string_append_c(out, '%');
-				g_string_append_c(out, '%');
-				g_string_append_c(out, *text);
-			}
-			code = 0;
+		     adv = format_expand_styles(out, &text, &dest->flags);
+		     if (!adv) {
+			  g_string_append_c(out, '%');
+			  g_string_append_c(out, '%');
+			  g_string_append_c(out, *text);
+		     } else {
+			  text += adv -1;
+		     }
+		     code = 0;
 		} else if (code == '$') {
 			/* argument */
 			char *ret;

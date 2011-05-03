@@ -116,20 +116,30 @@ static void update_cmd_color(unsigned char cmd, int *color)
 
 	  if (cmd & LINE_COLOR_BG) {
 	       /* set background color */
+
 	       *color &= FGATTR;
-	       if ((cmd & LINE_COLOR_DEFAULT) == 0)
-		    *color |= (cmd & 0x0ff) << 8;
-	       else {
+	       //*color &= ~LINE_COLOR_BG;
+	       if ((cmd & LINE_COLOR_DEFAULT) == 0) {
+		    int mask = (((cmd & ~LINE_COLOR_BG) & 0x00ff) << 8);
+		    fprintf(stderr, "update_cmd_color() bg mask 0x%02x\n", mask);
+		    *color |= mask;
+	       } else {
 		    *color = (*color & FGATTR) | ATTR_RESETBG;
 	       }
+
+	       fprintf(stderr, "update_cmd_color() bg color_change 0x%02d\n", *color);
+
+
 	  } else {
+
 	       /* set foreground color */
 	       *color &= BGATTR;
 	       if ((cmd & LINE_COLOR_DEFAULT) == 0)
-		    *color |= cmd & 0x0ff;
+		    *color |= cmd & 0xff;
 	       else {
 		    *color = (*color & BGATTR) | ATTR_RESETFG;
 	       }
+	       fprintf(stderr, "update_cmd_color() fg color_change 0x%02d\n", *color);
 	  }
      } else {
 

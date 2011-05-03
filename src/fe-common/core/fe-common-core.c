@@ -291,8 +291,9 @@ void glog_func(const char *log_domain, GLogLevelFlags log_level,
 	if (irssi_logfile != NULL && logfile_FILE != NULL) {
 	     fprintf(logfile_FILE, "GLib: %s: %s", reason, message);
 	     fflush(logfile_FILE);
-	} /* else if (windows == NULL) */
-	/*      fprintf(stderr, "GLib %s: %s\n", reason, message); */
+	} else { //  if (windows == NULL)
+	     fprintf(stderr, "GLib %s: %s", reason, message);
+	}
 	/* else { */
 	/*      printformat(NULL, NULL, MSGLEVEL_CLIENTERROR, */
 	/* 		 TXT_GLIB_ERROR, reason, message); */

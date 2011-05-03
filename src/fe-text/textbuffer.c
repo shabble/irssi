@@ -398,21 +398,23 @@ void textbuffer_remove_all_lines(TEXT_BUFFER_REC *buffer)
 
 static void set_color(GString *str, int cmd)
 {
-	int color = -1;
+	int color = ATTR_COLOR_UNDEFINED;
 
 	if (!(cmd & LINE_COLOR_DEFAULT))
-		color = (cmd & 0x0f)+'0';
+		color = (cmd & 0x0f) + '0';
 
 	g_message( "textbuffer.c:set_color color: %d (%02x)\n", color, color);
 
 	if ((cmd & LINE_COLOR_BG) == 0) {
                 /* change foreground color */
-		g_string_append_printf(str, "\004%c%c",
-				  color, FORMAT_COLOR_NOCHANGE);
+		g_string_append_printf(str, "%c%c%c",
+				       LINE_FORMAT_MARKER,
+				       color, FORMAT_COLOR_NOCHANGE);
 	} else {
 		/* change background color */
-		g_string_append_printf(str, "\004%c%c",
-				  FORMAT_COLOR_NOCHANGE, color);
+		g_string_append_printf(str, "%c%c%c",
+				       LINE_FORMAT_MARKER,
+				       FORMAT_COLOR_NOCHANGE, color);
 	}
 }
 

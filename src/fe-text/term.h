@@ -4,12 +4,20 @@
 typedef struct _TERM_WINDOW TERM_WINDOW;
 
 /* text attributes */
-#define ATTR_RESETFG	0x010000
-#define ATTR_RESETBG	0x020000
-#define ATTR_BOLD	0x040000
-#define ATTR_BLINK      0x080000
-#define ATTR_UNDERLINE	0x100000
-#define ATTR_REVERSE	0x200000
+
+
+#define FG_MASK        ( 0x00ff )
+#define BG_MASK        ( 0xff00 )
+
+#define ATTR_RESETFG	( 0x010000 )
+#define ATTR_RESETBG	( 0x020000 )
+#define ATTR_BOLD	( 0x040000 )
+#define ATTR_BLINK      ( 0x080000 )
+#define ATTR_UNDERLINE	( 0x100000 )
+#define ATTR_REVERSE	( 0x200000 )
+
+/* can also mean default color, probably. */
+#define ATTR_COLOR_UNDEFINED ( -1 )
 
 #define EXT_COLOR_BLACK   ( 0 )
 #define EXT_COLOR_RED     ( 1 )

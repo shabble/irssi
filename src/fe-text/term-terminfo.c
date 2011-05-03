@@ -370,12 +370,16 @@ void term_set_color2(TERM_WINDOW *window, int col)
 void term_set_color(TERM_WINDOW *window, int col)
 {
     int set_normal;
-    int fg = col & 0xff;
-    int bg = (col & 0xff00) >> 8;
+
+    int fg    = col & 0xff;
+    int bg    = (col & 0xff00) >> 8;
+    int attrs = (col & 0xff0000) << 16;
 
     if (col != ATTR_RESET) { 
 	 fprintf(stderr, "T-TI: set color called with col: %d (%08x)\n", col, col);
 	 fprintf(stderr, "T-TI: fg: %d (0x%02x), bg: %d (0x%02x)\n", fg, fg, bg, bg);
+    } else {
+	 fprintf(stderr, "T-TI: set color called with col: %d (%08x)\n", col, col);
     }
 
     set_normal = ((col & ATTR_RESETFG) && last_fg != -1) ||

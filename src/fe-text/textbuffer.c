@@ -239,13 +239,14 @@ void textbuffer_line_add_colors(TEXT_BUFFER_REC *buffer, LINE_REC **line,
 	g_message( "TBLAC1: fg: 0x%08x, bg: 0x%08x, flags: 0x%08x, last_flags: 0x%08x\n",
 		fg, bg, flags, buffer->last_flags);
 
-	fg = fg < 0 ? LINE_COLOR_DEFAULT : fg & 0xff;
-	bg = LINE_COLOR_BG | (bg < 0 ? LINE_COLOR_DEFAULT : bg & 0xff);
-
+	/* fg = fg < 0 ? LINE_COLOR_DEFAULT : fg & 0xff; */
+	/* bg = LINE_COLOR_BG | (bg < 0 ? LINE_COLOR_DEFAULT : bg & 0xff); */
 	g_message( "TBLAC2: fg: 0x%02x, bg: 0x%02x\n", fg, bg);
 
 	if (fg != buffer->last_fg) {
 		buffer->last_fg = fg;
+		data[pos++] = 0;
+		data[pos++] = LINE_CMD_SELECT_FG;
 		data[pos++] = 0;
 		data[pos++] = fg == 0 ? LINE_CMD_COLOR0 : fg;
 		g_message( "TBLAC2: fg: data[%d}=%d(0x%02x)\n", pos-1,data[pos-1],data[pos-1]);
@@ -253,6 +254,8 @@ void textbuffer_line_add_colors(TEXT_BUFFER_REC *buffer, LINE_REC **line,
 	}
 	if (bg != buffer->last_bg) {
                 buffer->last_bg = bg;
+		data[pos++] = 0;
+		data[pos++] = LINE_CMD_SELECT_BG;
 		data[pos++] = 0;
 		data[pos++] = bg;
 		g_message( "TBLAC2: bg: data[%d}=%d(0x%02x)\n", pos-1,data[pos-1],data[pos-1]);
@@ -293,7 +296,7 @@ void textbuffer_line_add_colors(TEXT_BUFFER_REC *buffer, LINE_REC **line,
 	g_message( "TBLAC data:\n");
 
 	for (i=0; i < 20; i++) {
-	     g_message( "%02x ", data[i]);
+	     g_message( "%02x\n", data[i]);
 	}
 	g_message( "\n");
 
@@ -401,7 +404,7 @@ static void set_color(GString *str, int cmd)
 	int color = ATTR_COLOR_UNDEFINED;
 
 	if (!(cmd & LINE_COLOR_DEFAULT))
-		color = (cmd & 0x0f) + '0';
+		color = (cmd & 0xff) + '0';
 
 	g_message( "textbuffer.c:set_color color: %d (%02x)\n", color, color);
 
@@ -459,7 +462,7 @@ void textbuffer_line2text(LINE_REC *line, int coloring, GString *str)
 		 * formats.c:843 (31 and 22) */
 
 		if ((cmd & 0x80) == 0) {
-			/* set color */
+			/*set color */
                         set_color(str, cmd);
 		} else switch (cmd) {
 		case LINE_CMD_UNDERLINE:

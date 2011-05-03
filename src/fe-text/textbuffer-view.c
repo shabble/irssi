@@ -109,40 +109,10 @@ static void textbuffer_cache_unref(TEXT_BUFFER_CACHE_REC *cache)
 
 static void update_cmd_color(unsigned char cmd, int *color)
 {
+     static int next_color_bg = 0;
      g_message( "update_cmd_color() color: 0x%08x, cmd: 0x%08x\n", *color, cmd);
 
-     if ((cmd & 0x80) == 0) {
-	  g_message( "update_cmd_color() color_change\n");
-
-	  if (cmd & LINE_COLOR_BG) {
-	       /* set background color */
-
-	       *color &= FGATTR;
-	       //*color &= ~LINE_COLOR_BG;
-	       if ((cmd & LINE_COLOR_DEFAULT) == 0) {
-		    int mask = (((cmd & ~LINE_COLOR_BG) & 0x00ff) << 8);
-		    g_message( "update_cmd_color() bg mask 0x%02x\n", mask);
-		    *color |= mask;
-	       } else {
-		    *color = (*color & FGATTR) | ATTR_RESETBG;
-	       }
-
-	       g_message( "update_cmd_color() bg color_change 0x%02d\n", *color);
-
-
-	  } else {
-
-	       /* set foreground color */
-	       *color &= BGATTR;
-	       if ((cmd & LINE_COLOR_DEFAULT) == 0)
-		    *color |= cmd & 0xff;
-	       else {
-		    *color = (*color & BGATTR) | ATTR_RESETFG;
-	       }
-	       g_message( "update_cmd_color() fg color_change 0x%02d\n", *color);
-	  }
-     } else {
-
+     if (cmd & 0x80) { /* cmd message */
 	  switch (cmd) {
 
 	  case LINE_CMD_UNDERLINE:
@@ -173,10 +143,24 @@ static void update_cmd_color(unsigned char cmd, int *color)
 	       g_message( "update_cmd_color() set BGATTR RESET 0x%08d\n", *color);
 
 	       break;
+	  case LINE_CMD_SELECT_FG:
+	       next_color_bg = 0;
+	       g_message( "update_cmd_color() Next color will be FG\n");
+
+	       break;
+
+	  case LINE_CMD_SELECT_BG:
+	       next_color_bg = 1;
+	       g_message( "update_cmd_color() Next color will be BG\n");
+	       break;
+	  }
+     } else {
+	  if (next_color_bg == 1) {
+	       *color = cmd << 8;
+	  } else {
+	       *color = cmd;
 	  }
      }
-     g_message( "update_cmd_color() end color: 0x%04x\n", *color);
-
 }
 
 static inline unichar read_unichar(const unsigned char *data, const unsigned char **next, int *width)
@@ -431,10 +415,7 @@ static int view_line_draw(TEXT_BUFFER_VIEW_REC *view, LINE_REC *line,
 			if (need_move || xpos > 0) {
 				term_move(view->window, xpos, ypos);
 			}
-//#ifdef COLOR_FORCE_GDB
-//#include <signal.h>
-//raise(SIGINT);
-//#endif
+
 			g_message( "view_line_draw(): color: 0x%08x\n", color);
 			term_set_color(view->window, color);
 

@@ -107,6 +107,12 @@ int format_expand_styles(GString *out, const char **format, int *flags)
 {
 	char *p, fmt;
 
+	/* storage for numerical parsing code for %x/X formats. */
+	unsigned char accum = 0;
+	int tmp, i;
+
+	//memset(num_buf, 0, 4);
+
 	fmt = **format;
 
 	g_message( "format_expand_styles: fmtchar: %c\n", fmt);
@@ -168,6 +174,43 @@ int format_expand_styles(GString *out, const char **format, int *flags)
 		/* code */
 		format_expand_code(format, out, flags);
 		break;
+	case 'x':
+	     tmp = 0;
+	     accum = 0;
+	     for (i = 1; i < 3; i++) {
+		  char fmtchar = (*format)[i];
+		  g_message("Format X: code: %c\n", fmtchar);
+		  tmp = g_ascii_xdigit_value(fmtchar);
+		  if (tmp != -1) {
+		       accum = accum * 16 + tmp;
+		  }	
+	     }
+	     g_string_append_c(out, 4);
+	     g_string_append_c(out, FORMAT_COLOR_NOCHANGE);
+	     g_string_append_c(out, accum);
+
+	     g_message("Format x: code: %d (0x%02x)\n", accum, accum);
+	     
+	     break;
+	case 'X':
+	     tmp = 0;
+	     accum = 0;
+	     for (i = 1; i < 3; i++) {
+		  char fmtchar = (*format)[i];
+		  g_message("Format X: code: %c\n", fmtchar);
+		  tmp = g_ascii_xdigit_value(fmtchar);
+		  if (tmp != -1) {
+		       accum = accum * 16 + tmp;
+		  }	
+	     }
+	     g_string_append_c(out, 4);
+	     g_string_append_c(out, accum);
+	     g_string_append_c(out, FORMAT_COLOR_NOCHANGE);
+
+	     g_message("Format X: code: %d (0x%02x)\n", accum, accum);
+	     
+	     break;
+
 	default:
 		/* check if it's a background color */
 		p = strchr(format_backs, fmt);
@@ -842,6 +885,8 @@ static void get_mirc_color(const char **str, int *fg_ret, int *bg_ret)
 	if (bg_ret) *bg_ret = bg;
 }
 
+/* TODO: What are these magic numbers!?
+ */
 #define IS_COLOR_CODE(c) \
 	((c) == 2 || (c) == 3 || (c) == 4 || (c) == 6 || (c) == 7 || \
 	(c) == 15 || (c) == 22 || (c) == 27 || (c) == 31)
@@ -950,7 +995,10 @@ void format_send_to_gui(TEXT_DEST_REC *dest, const char *text)
 
 	dup = str = g_strdup(text);
 
-	flags = 0; fgcolor = theme->default_color; bgcolor = -1;
+	flags = 0;
+	fgcolor = theme->default_color; 
+	bgcolor = -1;
+
 	while (*str != '\0') {
 		type = '\0';
 		for (ptr = str; *ptr != '\0'; ptr++) {
@@ -972,12 +1020,15 @@ void format_send_to_gui(TEXT_DEST_REC *dest, const char *text)
 
 		if (*str != '\0' || (flags & GUI_PRINT_FLAG_CLRTOEOL)) {
 			/* send the text to gui handler */
-		     g_message( "format_send_to_gui: sending: fg: 0x%04x, bg: 0x%04x flags: 0x%04x\n", fgcolor, bgcolor, flags);
+		     g_message("format_send_to_gui: sending: fg: 0x%04x, " \
+			       "bg: 0x%04x flags: 0x%04x\n", fgcolor, bgcolor, flags);
+
 			signal_emit_id(signal_gui_print_text, 6, dest->window,
 				       GINT_TO_POINTER(fgcolor),
 				       GINT_TO_POINTER(bgcolor),
 				       GINT_TO_POINTER(flags), str,
 				       dest);
+
 			flags &= ~(GUI_PRINT_FLAG_INDENT|GUI_PRINT_FLAG_CLRTOEOL);
 		     /* fprintf("format_send_to_gui: resetting flags: 0x%04x\n", flags); */
 		}
@@ -994,12 +1045,12 @@ void format_send_to_gui(TEXT_DEST_REC *dest, const char *text)
 
 		switch (type)
 		{
-		case 2:
+		case MIRC_BOLD_MARKER:
 			/* bold */
 			if (!hide_text_style)
 				flags ^= GUI_PRINT_FLAG_BOLD;
 			break;
-		case 3:
+		case MIRC_COLOR_MARKER:
 			/* MIRC color */
 			get_mirc_color((const char **) &ptr,
 					hide_colors ? NULL : &fgcolor,
@@ -1007,7 +1058,7 @@ void format_send_to_gui(TEXT_DEST_REC *dest, const char *text)
 			if (!hide_colors)
 				flags |= GUI_PRINT_FLAG_MIRC_COLOR;
 			break;
-		case 4:
+		case LINE_FORMAT_MARKER:
 			/* user specific colors */
 			flags &= ~GUI_PRINT_FLAG_MIRC_COLOR;
 			switch (*ptr) {

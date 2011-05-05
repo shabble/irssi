@@ -40,7 +40,7 @@
 
 #include <signal.h>
 
-typedef void (*ENTRY_REDIRECT_KEY_FUNC) (int key, void *data, SERVER_REC *server, WI_ITEM_REC *item);
+typedef void (*ENTRY_REDIRECT_KEY_FUNC) (gpointer *key, void *data, SERVER_REC *server, WI_ITEM_REC *item);
 typedef void (*ENTRY_REDIRECT_ENTRY_FUNC) (const char *line, void *data, SERVER_REC *server, WI_ITEM_REC *item);
 
 typedef struct {
@@ -54,7 +54,7 @@ static ENTRY_REDIRECT_REC *redir;
 static int escape_next_key;
 TermKey *tk;
 static int readtag;
-static unichar prev_key;
+static TermKeyKey *prev_key = NULL;
 static GTimeVal last_keypress;
 
 static int paste_detect_time, paste_verify_line_count;
@@ -82,7 +82,7 @@ void input_listen_deinit(void)
         readtag = -1;
 }
 
-static void handle_key_redirect(int key)
+static void handle_key_redirect(gpointer *key)
 {
 	ENTRY_REDIRECT_KEY_FUNC func;
 	void *data;
@@ -354,62 +354,74 @@ static void insert_paste_prompt(void)
 	g_free(str);
 }
 
-static void sig_gui_key_pressed(gpointer keyp)
+static void sig_gui_key_pressed(gpointer *keyp)
 {
 	GTimeVal now;
-        unichar key;
+        TermKeyKey *key;
 	char str[20];
 	int ret;
+	memset(str, 0, 20);
 
-	key = GPOINTER_TO_INT(keyp);
+	key = (TermKeyKey *)keyp;
 
 	if (redir != NULL && redir->flags & ENTRY_REDIRECT_FLAG_HOTKEY) {
-		handle_key_redirect(key);
-		return;
+	     handle_key_redirect(keyp);
+	     return;
 	}
 
         g_get_current_time(&now);
 
 	/* Handles stringification */
+	termkey_strfkey(tk, str, sizeof(str), key,
+			TERMKEY_FORMAT_VIM | TERMKEY_FORMAT_CARETCTRL);
+	fprintf(stderr, "You pressed key %s (0x%04x)\n", str, key->code.sym);
+	fprintf(stderr, " key %s\n", str);
+	fprintf(stderr, "Enter=%s\n",
+		key->code.sym == TERMKEY_SYM_ENTER ? "Yes" : "No");
 
-	if (key < 32) {
-		/* control key */
-                str[0] = '^';
-		str[1] = (char)key+'@';
-                str[2] = '\0';
-	} else if (key == 127) {
-                str[0] = '^';
-		str[1] = '?';
-                str[2] = '\0';
-	} else if (!active_entry->utf8) {
-		if (key <= 0xff) {
-			str[0] = (char)key;
-			str[1] = '\0';
-		} else {
-			str[0] = (char) (key >> 8);
-			str[1] = (char) (key & 0xff);
-			str[2] = '\0';
-		}
-	} else {
-                /* need to convert to utf8 */
-		str[g_unichar_to_utf8(key, str)] = '\0';
-	}
 
-	if (strcmp(str, "^") == 0) {
-		/* change it as ^^ */
-		str[1] = '^';
-		str[2] = '\0';
-	}
+	/* if (key < 32) { */
+	/* 	/\* control key *\/ */
+        /*         str[0] = '^'; */
+	/* 	str[1] = (char)key+'@'; */
+        /*         str[2] = '\0'; */
+	/* } else if (key == 127) { */
+        /*         str[0] = '^'; */
+	/* 	str[1] = '?'; */
+        /*         str[2] = '\0'; */
+	/* } else if (!active_entry->utf8) { */
+	/* 	if (key <= 0xff) { */
+	/* 		str[0] = (char)key; */
+	/* 		str[1] = '\0'; */
+	/* 	} else { */
+	/* 		str[0] = (char) (key >> 8); */
+	/* 		str[1] = (char) (key & 0xff); */
+	/* 		str[2] = '\0'; */
+	/* 	} */
+	/* } else { */
+        /*         /\* need to convert to utf8 *\/ */
+	/* 	str[g_unichar_to_utf8(key, str)] = '\0'; */
+	/* } */
 
+	/* if (strcmp(str, "^") == 0) { */
+	/* 	/\* change it as ^^ *\/ */
+	/* 	str[1] = '^'; */
+	/* 	str[2] = '\0'; */
+	/* } */
+
+	
 	if (escape_next_key) {
 		escape_next_key = FALSE;
-		gui_entry_insert_char(active_entry, key);
+
+		gui_entry_insert_text(active_entry, str);
+		//gui_entry_insert_char(active_entry, key->code.codepoint);
 		ret = 1;
 	} else {
 		ret = key_pressed(keyboard, str);
 		if (ret < 0) {
 			/* key wasn't used for anything, print it */
-			gui_entry_insert_char(active_entry, key);
+		     gui_entry_insert_text(active_entry, str);
+		     //gui_entry_insert_char(active_entry, key->code.codepoint);
 		}
 	}
 
@@ -419,9 +431,11 @@ static void sig_gui_key_pressed(gpointer keyp)
 
 	   don't count repeated keys so paste detection won't go on when
 	   you're holding some key down */
-	if (ret != 0 && key != prev_key) {
+	if (ret != 0 && prev_key != NULL && 
+	    (termkey_keycmp(tk, key, prev_key) == 0)) {
 		last_keypress = now;
 	}
+
 	prev_key = key;
 }
 
@@ -644,6 +658,40 @@ static void sig_input(void)
 		return;
 	}
 
+	fprintf(stderr, "sig_input: input detected. Reading now\n");
+	fflush(stderr);
+
+	//int complete = 0;
+	TermKeyKey key;
+	//while (!complete) {
+	char buffer[20];
+	
+	TermKeyResult ret = termkey_waitkey(tk, &key);
+	fprintf(stderr, "sig_input: input received.\n");
+	fflush(stderr);
+
+	switch (ret) {
+	case TERMKEY_RES_EOF:
+	     fprintf(stderr, "EOF on readkey. bolloxed\n");
+	     signal_emit("command quit", 1, "Lost terminal stdin");
+	     break;
+	     
+	case TERMKEY_RES_KEY:
+	     termkey_strfkey(tk, buffer, sizeof buffer, &key, TERMKEY_FORMAT_VIM);
+	     fprintf(stderr, "You pressed key %s\n", buffer);
+	     signal_emit("gui key pressed", 1, (gpointer *)&key);
+	     
+	     break;
+	     
+	     /* case TERMKEY_RES_AGAIN: */
+	     /* 	  fprintf(stderr, "RES_AGAIN\n"); */
+	     /* 	  break; */
+	     /* case TERMKEY_RES_NONE: */
+	     /* 	  complete = 1; */
+	     /* 	  break; */
+	}
+//}
+}
 	/* if (paste_prompt) { */
 	/* 	GArray *buffer = g_array_new(FALSE, FALSE, sizeof(unichar)); */
 	/* 	int line_count = 0; */
@@ -658,7 +706,8 @@ static void sig_input(void)
 	/* 	if (paste_detect_time > 0 && paste_buffer->len >= 3) { */
 	/* 		if (paste_timeout_id != -1) */
 	/* 			g_source_remove(paste_timeout_id); */
-	/* 		paste_timeout_id = g_timeout_add(paste_detect_time, paste_timeout, NULL); */
+	/* 		paste_timeout_id */
+	/* 		     = g_timeout_add(paste_detect_time, paste_timeout, NULL); */
 	/* 	} else { */
 	/* 		int i; */
 
@@ -670,7 +719,7 @@ static void sig_input(void)
 	/* 		paste_line_count = 0; */
 	/* 	} */
 	/* } */
-}
+/* } */
 
 time_t get_idle_time(void)
 {
@@ -961,7 +1010,8 @@ void gui_readline_init(void)
 
 	keyboard = keyboard_create("default", NULL);
 
-	tk = termkey_new(fileno(stdin), 0);
+	tk = termkey_new(0, 0);
+	termkey_set_waittime(tk, 5000);
 
 	if(!tk) {
 	     fprintf(stderr, "Cannot allocate termkey instance\n");

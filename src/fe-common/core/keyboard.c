@@ -28,11 +28,14 @@
 #include "settings.h"
 
 #include "keyboard.h"
+#include "termkey.h"
 #include "fe-windows.h"
 #include "printtext.h"
 
 GSList *keyinfos;
 static GHashTable *keys, *default_keys;
+
+static GHashTable *keyboards;
 
 /* A cache of some sort for key presses that generate a single char only.
    If the key isn't used, used_keys[key] is zero. */
@@ -44,20 +47,19 @@ static char used_keys[256];
 static GTree *key_states;
 static int key_config_frozen;
 
-struct _KEYBOARD_REC {
-	char *key_state; /* the ongoing key combo */
-        void *gui_data; /* GUI specific data sent in "key pressed" signal */
-};
 
 /* Creates a new "keyboard" - this is used only for keeping track of
    key combo states and sending the gui_data parameter in "key pressed"
    signal */
-KEYBOARD_REC *keyboard_create(void *data)
+KEYBOARD_REC *keyboard_create(char *name, void *data)
 {
 	KEYBOARD_REC *rec;
 
 	rec = g_new0(KEYBOARD_REC, 1);
 	rec->gui_data = data;
+	rec->name = strdup(name);
+
+	g_hash_table_insert(keyboards, name, rec);
 
 	signal_emit("keyboard created", 1, rec);
         return rec;
@@ -66,10 +68,21 @@ KEYBOARD_REC *keyboard_create(void *data)
 /* Destroys a keyboard */
 void keyboard_destroy(KEYBOARD_REC *keyboard)
 {
-	signal_emit("keyboard destroyed", 1, keyboard);
+     g_hash_table_remove(keyboards, keyboard->name);
+
+     signal_emit("keyboard destroyed", 1, keyboard);
 
         g_free_not_null(keyboard->key_state);
+        g_free(keyboard->name);
         g_free(keyboard);
+}
+
+KEYBOARD_REC *keyboard_find(char *name)
+{
+     KEYBOARD_REC *rec;
+     
+     rec = g_hash_table_lookup(keyboards, name);
+     return rec;
 }
 
 static void key_destroy(KEY_REC *rec, GHashTable *hash)
@@ -837,8 +850,13 @@ void keyboard_init(void)
 {
 	keys = g_hash_table_new((GHashFunc) g_str_hash,
 				(GCompareFunc) g_str_equal);
+
 	default_keys = g_hash_table_new((GHashFunc) g_str_hash,
 					(GCompareFunc) g_str_equal);
+	
+	keyboards = g_hash_table_new((GHashFunc) g_str_hash,
+				     (GCompareFunc) g_str_equal);
+
 	keyinfos = NULL;
 	key_states = g_tree_new((GCompareFunc) strcmp);
         key_config_frozen = 0;
@@ -869,6 +887,8 @@ void keyboard_deinit(void)
 		keyinfo_remove(keyinfos->data);
 	g_hash_table_destroy(keys);
 	g_hash_table_destroy(default_keys);
+	g_hash_table_destroy(keyboards);
+
 
 	g_tree_traverse(key_states, (GTraverseFunc) key_state_destroy,
 			G_IN_ORDER, NULL);

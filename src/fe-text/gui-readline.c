@@ -370,6 +370,8 @@ static void sig_gui_key_pressed(gpointer keyp)
 
         g_get_current_time(&now);
 
+	/* Handles stringification */
+
 	if (key < 32) {
 		/* control key */
                 str[0] = '^';
@@ -957,9 +959,9 @@ void gui_readline_init(void)
 	settings_add_bool("misc", "paste_join_multiline", TRUE);
         setup_changed();
 
-	keyboard = keyboard_create(NULL);
+	keyboard = keyboard_create("default", NULL);
 
-	tk = termkey_new(0, 0);
+	tk = termkey_new(fileno(stdin), 0);
 
 	if(!tk) {
 	     fprintf(stderr, "Cannot allocate termkey instance\n");

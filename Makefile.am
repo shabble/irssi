@@ -1,4 +1,5 @@
-ACLOCAL_AMFLAGS = -I .
+ACLOCAL_AMFLAGS = -I . -I /opt/local/include
+AM_LDFLAGS = -L /opt/local/lib -ltermkey
 
 # create default-config.h
 BUILT_SOURCES = default-config.h default-theme.h irssi-version.h

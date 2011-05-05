@@ -21,12 +21,23 @@ struct _KEY_REC {
 	char *data;
 };
 
+struct _KEYBOARD_REC {
+     char *name;
+     char *key_state; /* the ongoing key combo */
+     void *gui_data; /* GUI specific data sent in "key pressed" signal */
+};
+
+
+
 extern GSList *keyinfos;
+
+KEYBOARD_REC *keyboard_find(char *name);
 
 /* Creates a new "keyboard" - this is used only for keeping track of
    key combo states and sending the gui_data parameter in "key pressed"
    signal */
-KEYBOARD_REC *keyboard_create(void *gui_data);
+
+KEYBOARD_REC *keyboard_create(char *name, void *gui_data);
 /* Destroys a keyboard */
 void keyboard_destroy(KEYBOARD_REC *keyboard);
 /* Returns 1 if key press was consumed, -1 if not, 0 if it's beginning of a

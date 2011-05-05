@@ -507,6 +507,12 @@ if test "$want_perl" != "no"; then
 	fi
 fi
 
+# libtermkey stuff
+
+AC_CHECK_HEADERS(termkey.h)
+AC_CHECK_LIB(termkey, termkey_new)
+
+
 dnl ** check what we want to build
 AM_CONDITIONAL(BUILD_TEXTUI, test "$want_textui" = "yes")
 AM_CONDITIONAL(BUILD_IRSSIBOT, test "$want_irssibot" = "yes")

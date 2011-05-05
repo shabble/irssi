@@ -36,6 +36,7 @@
 #include "gui-entry.h"
 #include "gui-windows.h"
 #include "utf8.h"
+#include "termkey.h"
 
 #include <signal.h>
 
@@ -51,7 +52,7 @@ typedef struct {
 static KEYBOARD_REC *keyboard;
 static ENTRY_REDIRECT_REC *redir;
 static int escape_next_key;
-
+TermKey *tk;
 static int readtag;
 static unichar prev_key;
 static GTimeVal last_keypress;
@@ -641,32 +642,32 @@ static void sig_input(void)
 		return;
 	}
 
-	if (paste_prompt) {
-		GArray *buffer = g_array_new(FALSE, FALSE, sizeof(unichar));
-		int line_count = 0;
-		unichar key;
-		term_gets(buffer, &line_count);
-		key = g_array_index(buffer, unichar, 0);
-		if (key == 11 || key == 3)
-			paste_flush(key == 11);
-		g_array_free(buffer, TRUE);
-	} else {
-		term_gets(paste_buffer, &paste_line_count);
-		if (paste_detect_time > 0 && paste_buffer->len >= 3) {
-			if (paste_timeout_id != -1)
-				g_source_remove(paste_timeout_id);
-			paste_timeout_id = g_timeout_add(paste_detect_time, paste_timeout, NULL);
-		} else {
-			int i;
+	/* if (paste_prompt) { */
+	/* 	GArray *buffer = g_array_new(FALSE, FALSE, sizeof(unichar)); */
+	/* 	int line_count = 0; */
+	/* 	unichar key; */
+	/* 	term_gets(buffer, &line_count); */
+	/* 	key = g_array_index(buffer, unichar, 0); */
+	/* 	if (key == 11 || key == 3) */
+	/* 		paste_flush(key == 11); */
+	/* 	g_array_free(buffer, TRUE); */
+	/* } else { */
+	/* 	term_gets(paste_buffer, &paste_line_count); */
+	/* 	if (paste_detect_time > 0 && paste_buffer->len >= 3) { */
+	/* 		if (paste_timeout_id != -1) */
+	/* 			g_source_remove(paste_timeout_id); */
+	/* 		paste_timeout_id = g_timeout_add(paste_detect_time, paste_timeout, NULL); */
+	/* 	} else { */
+	/* 		int i; */
 
-			for (i = 0; i < paste_buffer->len; i++) {
-				unichar key = g_array_index(paste_buffer, unichar, i);
-				signal_emit("gui key pressed", 1, GINT_TO_POINTER(key));
-			}
-			g_array_set_size(paste_buffer, 0);
-			paste_line_count = 0;
-		}
-	}
+	/* 		for (i = 0; i < paste_buffer->len; i++) { */
+	/* 			unichar key = g_array_index(paste_buffer, unichar, i); */
+	/* 			signal_emit("gui key pressed", 1, GINT_TO_POINTER(key)); */
+	/* 		} */
+	/* 		g_array_set_size(paste_buffer, 0); */
+	/* 		paste_line_count = 0; */
+	/* 	} */
+	/* } */
 }
 
 time_t get_idle_time(void)
@@ -957,6 +958,14 @@ void gui_readline_init(void)
         setup_changed();
 
 	keyboard = keyboard_create(NULL);
+
+	tk = termkey_new(0, 0);
+
+	if(!tk) {
+	     fprintf(stderr, "Cannot allocate termkey instance\n");
+	     signal_emit("gui exit", 0);
+	}
+
         key_configure_freeze();
 
 	key_bind("key", NULL, " ", "space", (SIGNAL_FUNC) key_combo);
@@ -1171,6 +1180,7 @@ void gui_readline_deinit(void)
 	key_unbind("change_window", (SIGNAL_FUNC) key_change_window);
 	key_unbind("stop_irc", (SIGNAL_FUNC) key_sig_stop);
 	keyboard_destroy(keyboard);
+	termkey_destroy(tk);
         g_array_free(paste_buffer, TRUE);
 
         key_configure_thaw();

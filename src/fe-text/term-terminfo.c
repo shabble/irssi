@@ -23,6 +23,7 @@
 #include "term.h"
 #include "terminfo-core.h"
 #include "utf8.h"
+#include "termkey.h"
 
 #include <signal.h>
 
@@ -577,41 +578,75 @@ void term_set_input_type(int type)
 
 void term_gets(GArray *buffer, int *line_count)
 {
-	int ret, i, char_len;
+	/* int ret, i, char_len; */
+	/* TermKeyKey *key; */
+	/* char buf[50]; */
+        /* /\* fread() doesn't work *\/ */
+	
+	/* /\* ret = read(fileno(current_term->in), *\/ */
+	/* /\* 	   term_inbuf + term_inbuf_pos, sizeof(term_inbuf)-term_inbuf_pos); *\/ */
 
-        /* fread() doesn't work */
+	/* ret = termkey_waitkey(tk, &key); */
+	/* termkey_strfkey(tk, buf, sizeof(buf), &key, TERMKEY_FORMAT_VIM); */
+	/* fprintf(stderr, "Got keypress: %s\n", buf); */
 
-	ret = read(fileno(current_term->in),
-		   term_inbuf + term_inbuf_pos, sizeof(term_inbuf)-term_inbuf_pos);
-	if (ret == 0) {
-		/* EOF - terminal got lost */
-		ret = -1;
-	} else if (ret == -1 && (errno == EINTR || errno == EAGAIN))
-		ret = 0;
-	if (ret == -1)
-		signal_emit("command quit", 1, "Lost terminal");
+	/* if (ret == TERMKEY_RES_EOF) { */
+	/* 	/\* EOF - terminal got lost *\/ */
+	/* 	ret = -1; */
+	/* } else if (ret == -1 && (errno == EINTR || errno == EAGAIN)) */
+	/* 	ret = 0; */
+	/* if (ret == -1) */
+	/* 	signal_emit("comma #nd quit", 1, "Lost terminal"); */
 
-	if (ret > 0) {
-                /* convert input to unichars. */
-		term_inbuf_pos += ret;
-		for (i = 0; i < term_inbuf_pos; ) {
-			unichar key;
-			char_len = input_func(term_inbuf+i, term_inbuf_pos-i,
-					      &key);
-			if (char_len < 0)
-				break;
-			g_array_append_val(buffer, key);
-			if (key == '\r' || key == '\n')
-				(*line_count)++;
+	/* if (ret == TERMKEY_RES_KEY) { */
+	/*      switch (key.type) { */
+	/*      case TERMKEY_TYPE_UNICODE: */
+	/* 	  g_array_append_val(buffer, key.utf8); */
+	/* 	  break; */
+	/*      case TERMKEY_TYPE_FUNCTION: */
+	/* 	  fprintf(stderr, "Function key is %d\n", key.code); */
+		  
+	/* 	  break; */
 
-			i += char_len;
-		}
+	/*      case TERMKEY_TYPE_KEYSYM: */
+	/* 	  fprintf(stderr, "Keysym is %d\n", key.code); */
+	/* 	  memset(buf, 0, 50); */
+	/* 	  char_len = termkey_strfkey(tk, buf, sizeof(buf), &key,  */
+	/* 				     TERMKEY_FORMAT_ALTISMETA */
+	/* 				     | TERMKEY_FORMAT_CARETCTRL); */
+	/* 	  //strncpy(buffer, buf, char_len); */
+	/* 	  g_array_append_val(buffer, buf); */
+	/* 	  *line_count = 1; */
 
-		if (i >= term_inbuf_pos)
-			term_inbuf_pos = 0;
-		else if (i > 0) {
-			memmove(term_inbuf, term_inbuf+i, term_inbuf_pos-i);
-                        term_inbuf_pos -= i;
-		}
-	}
+	/* 	  fprintf(stderr, "Got keypress: %s\n", buf); */
+		  
+	/* 	  break; */
+
+	/*      case TERMKEY_TYPE_MOUSE: */
+	/* 	  fprintf(stderr, "Keysym is %d\n", key.code); */
+	/* 	  break; */
+	/*      default: */
+	/*      } */
+        /*         /\* /\\* convert input to unichars. *\\/ *\/ */
+	/* 	/\* term_inbuf_pos += ret; *\/ */
+	/* 	/\* for (i = 0; i < term_inbuf_pos; ) { *\/ */
+	/* 	/\* 	unichar key; *\/ */
+	/* 	/\* 	char_len = input_func(term_inbuf+i, term_inbuf_pos-i, *\/ */
+	/* 	/\* 			      &key); *\/ */
+	/* 	/\* 	if (char_len < 0) *\/ */
+	/* 	/\* 		break; *\/ */
+	/* 	/\* 	g_array_append_val(buffer, key); *\/ */
+	/* 	/\* 	if (key == '\r' || key == '\n') *\/ */
+	/* 	/\* 		(*line_count)++; *\/ */
+
+	/* 	/\* 	i += char_len; *\/ */
+	/* 	/\* } *\/ */
+
+	/* 	/\* if (i >= term_inbuf_pos) *\/ */
+	/* 	/\* 	term_inbuf_pos = 0; *\/ */
+	/* 	/\* else if (i > 0) { *\/ */
+	/* 	/\* 	memmove(term_inbuf, term_inbuf+i, term_inbuf_pos-i); *\/ */
+        /*         /\*         term_inbuf_pos -= i; *\/ */
+	/* 	/\* } *\/ */
+	/* } */
 }

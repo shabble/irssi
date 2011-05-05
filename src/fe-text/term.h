@@ -1,6 +1,8 @@
 #ifndef __TERM_H
 #define __TERM_H
 
+#include "termkey.h"
+
 typedef struct _TERM_WINDOW TERM_WINDOW;
 
 /* text attributes */
@@ -25,6 +27,7 @@ typedef guint32 unichar;
 extern TERM_WINDOW *root_window;
 extern int term_width, term_height;
 extern int term_use_colors, term_type;
+extern TermKey *tk;
 
 /* Initialize / deinitialize terminal */
 int term_init(void);

@@ -364,6 +364,15 @@ static void sig_gui_key_pressed(gpointer *keyp)
 
 	key = (TermKeyKey *)keyp;
 
+	switch (key->type) {
+	case TERMKEY_TYPE_UNICODE:
+	case TERMKEY_TYPE_FUNCTION:
+	case TERMKEY_TYPE_KEYSYM:
+	case TERMKEY_TYPE_MOUSE:
+	}
+
+
+
 	if (redir != NULL && redir->flags & ENTRY_REDIRECT_FLAG_HOTKEY) {
 	     handle_key_redirect(keyp);
 	     return;
@@ -658,40 +667,34 @@ static void sig_input(void)
 		return;
 	}
 
-	fprintf(stderr, "sig_input: input detected. Reading now\n");
-	fflush(stderr);
+	/* fprintf(stderr, "sig_input: input detected. Reading now\n"); */
+	/* fflush(stderr); */
 
-	//int complete = 0;
 	TermKeyKey key;
-	//while (!complete) {
 	char buffer[20];
 	
 	TermKeyResult ret = termkey_waitkey(tk, &key);
-	fprintf(stderr, "sig_input: input received.\n");
-	fflush(stderr);
+	/* fprintf(stderr, "sig_input: input received.\n"); */
+	/* fflush(stderr); */
 
 	switch (ret) {
+
 	case TERMKEY_RES_EOF:
-	     fprintf(stderr, "EOF on readkey. bolloxed\n");
+	     //fprintf(stderr, "EOF on readkey. bolloxed\n");
 	     signal_emit("command quit", 1, "Lost terminal stdin");
 	     break;
 	     
 	case TERMKEY_RES_KEY:
-	     termkey_strfkey(tk, buffer, sizeof buffer, &key, TERMKEY_FORMAT_VIM);
-	     fprintf(stderr, "You pressed key %s\n", buffer);
 	     signal_emit("gui key pressed", 1, (gpointer *)&key);
-	     
 	     break;
-	     
-	     /* case TERMKEY_RES_AGAIN: */
-	     /* 	  fprintf(stderr, "RES_AGAIN\n"); */
-	     /* 	  break; */
-	     /* case TERMKEY_RES_NONE: */
-	     /* 	  complete = 1; */
-	     /* 	  break; */
+        /* unused by waitkey(), just to squash warnings */
+	case TERMKEY_RES_AGAIN:
+	case TERMKEY_RES_NONE:
 	}
-//}
 }
+
+// TODO: Fix the paste detection mechanism.
+
 	/* if (paste_prompt) { */
 	/* 	GArray *buffer = g_array_new(FALSE, FALSE, sizeof(unichar)); */
 	/* 	int line_count = 0; */

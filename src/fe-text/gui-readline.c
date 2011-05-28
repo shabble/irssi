@@ -366,12 +366,14 @@ static void sig_gui_key_pressed(gpointer *keyp)
 
 	switch (key->type) {
 	case TERMKEY_TYPE_UNICODE:
+	     break;
 	case TERMKEY_TYPE_FUNCTION:
+	     break;
 	case TERMKEY_TYPE_KEYSYM:
+	     break;
 	case TERMKEY_TYPE_MOUSE:
+	     break;
 	}
-
-
 
 	if (redir != NULL && redir->flags & ENTRY_REDIRECT_FLAG_HOTKEY) {
 	     handle_key_redirect(keyp);
@@ -689,8 +691,11 @@ static void sig_input(void)
 	     break;
         /* unused by waitkey(), just to squash warnings */
 	case TERMKEY_RES_AGAIN:
+	     break;
 	case TERMKEY_RES_NONE:
+	     break;
 	}
+	
 }
 
 // TODO: Fix the paste detection mechanism.
